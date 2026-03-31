@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUMO GUI Configuration for Realistic 2D Intersection Visualization -->
+<configuration>
+    <input>
+        <net-file value="intersection.net.xml"/>
+        <route-files value="routes.rou.xml"/>
+    </input>
+    
+    <time>
+        <begin value="0"/>
+        <end value="3600"/>
+    </time>
+    
+    <processing>
+        <time-to-teleport value="-1"/>
+        <collision.check-junctions value="true"/>
+        <collision.action value="warn"/>
+    </processing>
+    
+    <!-- GUI-specific visualization settings -->
+    <gui_only>
+        <!-- Window setup -->
+        <gui-settings-file value="gui_settings.xml"/>
+        
+        <!-- Rendering options for clarity -->
+        <start value="false"/>
+        <quit-on-end value="false"/>
+        
+        <!-- Choose zoom level for good intersection visibility -->
+        <window-size value="1400,900"/>
+        <window-pos value="50,50"/>
+    </gui_only>
+    
+    <!-- Additional settings for traffic simulation accuracy -->
+    <report>
+        <verbose value="false"/>
+    </report>
+</configuration>

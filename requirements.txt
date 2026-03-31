@@ -1,0 +1,6 @@
+torch>=2.2
+numpy>=1.24
+pyyaml>=6.0.1
+tqdm>=4.66
+traci>=1.20.0
+sumolib>=1.20.0

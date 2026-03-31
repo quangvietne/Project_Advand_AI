@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<views>
+    <view type="default">
+        <!-- Lane visualization -->
+        <scheme name="standard">
+            <!-- Lane markings -->
+            <colorScheme name="lane">
+                <entry name="selectedLane" color="0,0,200,255"/>
+                <entry name="lane" color="200,200,200,255"/>
+                <entry name="laneBorder" color="100,100,100,255"/>
+                <entry name="laneMarkings" color="255,255,255,255"/>
+            </colorScheme>
+            
+            <!-- Vehicle visualization -->
+            <colorScheme name="vehicle">
+                <entry name="vehicle" color="0,100,255,255"/>
+                <entry name="vehicleSelected" color="255,100,0,255"/>
+                <entry name="motorcycle" color="200,100,0,255"/>
+                <entry name="truck" color="100,100,100,255"/>
+                <entry name="bus" color="200,0,0,255"/>
+            </colorScheme>
+            
+            <!-- Traffic light visualization -->
+            <colorScheme name="trafficLight">
+                <entry name="TLS Red" color="255,0,0,255"/>
+                <entry name="TLS Yellow" color="255,255,0,255"/>
+                <entry name="TLS Green" color="0,255,0,255"/>
+            </colorScheme>
+        </scheme>
+        
+        <!-- View settings -->
+        <viewSettings>
+            <!-- Show lane markings clearly -->
+            <setting name="show_lane_markings" value="1"/>
+            <!-- Improve edge rendering -->
+            <setting name="show_edges" value="1"/>
+            <setting name="show_edge_labels" value="0"/>
+            <!-- Show junction details -->
+            <setting name="show_junctions" value="1"/>
+            <!-- Vehicle rendering mode: shapes instead of triangles -->
+            <setting name="vehicleMode" value="0"/>
+            <!-- Show vehicle names -->
+            <setting name="show_vehicle_names" value="0"/>
+            <!-- Improve drawing quality -->
+            <setting name="antialiasing" value="1"/>
+            <setting name="smoothing" value="1"/>
+        </viewSettings>
+    </view>
+</views>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUMO GUI Settings for Realistic 2D Top-Down Intersection View -->
+<gui-settings>
+    <!-- Visualization scheme: what to show and how -->
+    <viewport>
+        <!-- Zoom settings -->
+        <initial-view type="net" zoom="100" x="0" y="0"/>
+        <!-- Center on the intersection -->
+    </viewport>
+    
+    <!-- Rendering settings for vehicle visualization -->
+    <decals>
+        <!-- Show vehicle names: off for cleaner view -->
+        <show-vehicle-names value="false"/>
+        <!-- Show vehicle text: off -->
+        <show-vehicle-text value="false"/>
+    </decals>
+    
+    <!-- Edge/Lane visualization -->
+    <edges>
+        <!-- Show lane markings clearly -->
+        <lane-edge-name value="true"/>
+        <spread-superposed value="true"/>
+        <!-- High quality lane rendering -->
+        <scale value="1.0"/>
+    </edges>
+    
+    <!-- Junction visualization -->
+    <junctions>
+        <!-- Show junction details clearly -->
+        <show-junction-info value="true"/>
+        <!-- Show traffic light logic -->
+        <show-traffic-light value="true"/>
+    </junctions>
+    
+    <!-- Vehicle rendering - CRITICAL for realistic appearance -->
+    <vehicles>
+        <!-- Use detailed vehicle shapes (car, truck, motorcycle) not simple triangles -->
+        <detail-exaggeration value="1.0"/>
+        <!-- Show vehicle bodies with proper proportions -->
+        <mini-exaggeration value="0.0"/>
+        <!-- Better rendering of individual vehicles -->
+        <hide-vehicle-type-icons value="false"/>
+    </vehicles>
+    
+    <!-- Traffic light visualization -->
+    <traffic-lights>
+        <!-- Show TLS index/state clearly -->
+        <show-index value="true"/>
+        <!-- Use realistic colored lights -->
+        <show-link-tls value="true"/>
+    </traffic-lights>
+    
+    <!-- Simulation speed and rendering quality -->
+    <quality>
+        <!-- Enable anti-aliasing for smooth edges -->
+        <anti-aliasing value="true"/>
+        <!-- High quality polygon rendering -->
+        <dither value="true"/>
+        <!-- Smooth rendering of curves -->
+        <smooth-roads value="true"/>
+    </quality>
+    
+    <!-- Color schemes for better visibility -->
+    <color-schemes>
+        <!-- Default scheme with good contrast -->
+        <vehicle-scheme name="by-type">
+            <!-- Motorcycles: orange-brown -->
+            <color-entry class="motorcycle" color="200,100,0,255"/>
+            <!-- Cars: blue -->
+            <color-entry class="passenger" color="0,100,255,255"/>
+            <!-- Buses: red -->
+            <color-entry class="bus" color="255,0,0,255"/>
+            <!-- Trucks: gray -->
+            <color-entry class="truck" color="100,100,100,255"/>
+        </vehicle-scheme>
+        
+        <!-- Lane and edge colors -->
+        <edge-scheme name="standard">
+            <!-- Lane background: light gray -->
+            <color-entry name="lane" color="240,240,240,255"/>
+            <!-- Lane borders: dark gray -->
+            <color-entry name="lane-border" color="50,50,50,255"/>
+            <!-- Lane markings: white -->
+            <color-entry name="lane-markings" color="255,255,255,255"/>
+            <!-- Junction area: light yellow -->
+            <color-entry name="junction" color="255,255,200,255"/>
+        </edge-scheme>
+        
+        <!-- Traffic light colors -->
+        <tls-scheme name="realistic">
+            <color-entry name="red" color="255,0,0,255"/>
+            <color-entry name="yellow" color="255,255,0,255"/>
+            <color-entry name="green" color="0,255,0,255"/>
+            <color-entry name="off" color="128,128,128,255"/>
+        </tls-scheme>
+    </color-schemes>
+    
+    <!-- Interactive controls -->
+    <gui-options>
+        <!-- Show selection list -->
+        <show-selection-list value="true"/>
+        <!-- Show object details on hover -->
+        <show-object-details value="true"/>
+        <!-- Auto-centered on selection -->
+        <auto-center-selection value="true"/>
+    </gui-options>
+</gui-settings>

@@ -1,0 +1,555 @@
+\documentclass{beamer}
+\usetheme{Madrid}
+% \usetheme{Boadilla} 
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath, amssymb}
+
+
+
+\title{Tối ưu hóa điều khiển đèn tín hiệu giao thông dựa trên Mô hình Quyết định Markov}
+\date{}
+
+% --- LỆNH ĐỂ BỎ CHÂN TRANG (FOOTLINE) ---
+\setbeamertemplate{footline}{}
+% -----------------------------------------
+\begin{document}
+
+%---------------------------------
+\begin{frame}
+\titlepage
+\vspace{-3cm}
+    \begin{center}
+        \item Nguyễn Quang Việt – MSSV: 22001659
+        \item Phùng Hữu Uy – MSSV: 22001654
+    \end{center}
+\end{frame}
+
+
+
+
+% --- SLIDE 2: NỘI DUNG TRÌNH BÀY (AGENDA) ---
+\begin{frame}{Nội dung trình bày}
+    \begin{enumerate}
+        \item Đặt vấn đề và Mục tiêu nghiên cứu
+        \item Quá trình Quyết định Markov (MDP)
+        \item Lý thuyết về Học tăng cường (Reinforcement Learning)
+        \item Deep Q-Learning (DQN) & Các cơ chế nâng cao
+        
+
+    \end{enumerate}
+\end{frame}
+
+
+\input{Chuong1}
+
+
+\end{document}
+
+\begin{frame}
+  \centering
+  \Huge \textbf{PHẦN 1} \\[0.5cm]
+  \LARGE Đặt vấn đề và Mục tiêu nghiên cứu
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Bài toán điều khiển đèn giao thông}
+\begin{itemize}
+    \item \textbf{Bối cảnh:} Ùn tắc giao thông đô thị là thách thức nghiêm trọng do đô thị hóa và sự gia tăng phương tiện.
+    \item \textbf{Vấn đề tại nút giao:} Các dòng giao thông xung đột cần được điều phối hợp lý.
+    \item \textbf{Hạn chế phương pháp truyền thống:}
+    \begin{itemize}
+        \item Điều khiển thời gian cố định (Fixed-time).
+        \item Điều khiển dựa trên cảm biến đơn giản (Actuated control).
+        \item Thiếu khả năng thích ứng với điều kiện giao thông biến động và ngẫu nhiên.
+    \end{itemize}
+    \item \textbf{Mục tiêu điều khiển:} Phân bổ thời gian xanh và chuyển pha tối ưu nhằm giảm ùn tắc và thời gian di chuyển.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Giao thông như một bài toán ra quyết định tuần tự}
+\begin{itemize}
+    \item \textbf{Đặc trưng chính:} Điều khiển đèn giao thông diễn ra theo chuỗi thời gian
+    \begin{itemize}
+        \item Quyết định ở thời điểm $t$ ảnh hưởng đến trạng thái ở $t+1$
+        \item Các dòng giao thông có tính động và ngẫu nhiên
+        \item Cần tối ưu phần thưởng dài hạn, không chỉ tức thời
+    \end{itemize}
+    
+    \item \textbf{Câu hỏi:} Cần một khung mô hình toán học nào để biểu diễn và giải quyết bài toán như vậy?
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Tại sao cần Markov Decision Process?}
+\begin{itemize}
+    \item \textbf{Bài toán giao thông} có các đặc điểm:
+    \begin{enumerate}
+        \item \textbf{Quyết định tuần tự}: Hành động ở $t$ ảnh hưởng đến trạng thái $t+1$
+        \item \textbf{Không đơn định}: Môi trường giao thông ngẫu nhiên (phương tiện đến bất ngờ)
+        \item \textbf{Tối ưu dài hạn}: Không chỉ giảm ùn tắc ngay bây giờ, mà cả tương lai
+        \item \textbf{Không biết trước}: Người thiết kế không biết quy luật chuyển đổi trạng thái
+    \end{enumerate}
+    
+    \item \textbf{MDP} đáp ứng tất cả yêu cầu:
+    \begin{itemize}
+        \item Khung mô hình cho \textbf{ra quyết định tuần tự} trong môi trường ngẫu nhiên
+        \item Tính chất Markov: Trạng thái kế tiếp chỉ phụ thuộc hiện tại → đơn giản hóa
+        \item Cho phép tối ưu \textbf{phần thưởng tích lũy chiết khấu}
+    \end{itemize}
+    
+    \item \textbf{Kết luận}: Bài toán đèn giao thông $\equiv$ Markov Decision Process
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \centering
+  \Huge \textbf{PHẦN 2} \\[0.5cm]
+  \LARGE Quá trình Quyết định Markov (MDP)
+\end{frame}
+%---------------------------------
+\begin{frame}{Quá trình Quyết định Markov (MDP) (1)}
+\begin{itemize}
+    \item \textbf{Định nghĩa:} MDP là khung toán học cho việc ra quyết định trong môi trường ngẫu nhiên.
+    \item \textbf{Thành phần của MDP:}
+    \begin{itemize}
+        \item $S$: Không gian trạng thái
+        \item $A$: Không gian hành động
+        \item $P(s'|s,a)$: Hàm xác suất chuyển trạng thái, biểu thị xác suất chuyển từ trạng thái $s$ sang trạng thái $s'$ sau khi thực hiện hành động $a$.
+        
+        \item $R(s,a)$: Hàm phần thưởng, đánh giá mức độ hiệu quả của hành động $a$ tại trạng thái $s$
+        
+    \end{itemize}
+    \item \textbf{Tính chất Markov:}
+    \[
+    P(s_{t+1} | s_t, a_t) = P(s_{t+1} | s_0, a_0, \ldots, s_t, a_t)
+    \]
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Quá trình Quyết định Markov (MDP) (2)}
+\begin{itemize}
+    \item \textbf{Mục tiêu:} tìm ra một chính sách tối ưu $\pi (a|s)$ để ánh xạ các trạng thái sang hành động nhằm tối đa hóa phần thưởng chiết khấu lũy kế kỳ vọng:
+    \[
+    \mathbb{E}\left[\sum_{t=0}^{\infty} \gamma^t R(s_t,a_t)\right]
+    \]
+    \item Trong đó $\gamma \in (0,1]$ là hệ số chiết khấu, đại diện cho tầm quan trọng tương đối của các phần thưởng trong tương lai so với phần thưởng tức thì
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Ánh xạ bài toán đèn giao thông sang MDP (1)}
+\begin{itemize}
+    \item \textbf{Tác nhân (Agent):} Hệ thống điều khiển tín hiệu giao thông (TLCS)
+    \item \textbf{Môi trường:} Nút giao thông quan sát được
+    \item \textbf{Trạng thái ($s$):}
+    \begin{itemize}
+        \item Mỗi làn đường được quan sát qua 4 đặc trưng liên tục:
+            \begin{itemize}
+                \item Số xe dừng (queue length)
+                \item Tốc độ trung bình (average speed)
+                \item Thời gian chờ tích lũy (waiting time)
+                \item Số lượng xe có trọng số theo loại phương tiện Việt Nam (weighted vehicle count)
+            \end{itemize}
+        \item Nút giao có 4 hướng, mỗi hướng 2 làn vào $\Rightarrow$ 8 làn $\times$ 4 đặc trưng = 32 chiều
+        \item Biểu diễn: $s \in \mathbb{R}^{4L}$ với $L$ là số làn (hiện tại $L=8$, $s \in \mathbb{R}^{32}$)
+        \item Trọng số xe Việt Nam: xe máy (0.5), ô tô (1.5), xe buýt (2.0), xe tải (2.0) — theo chuẩn PCU: 1 ô tô $\approx$ 3 xe máy
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Ánh xạ bài toán đèn giao thông sang MDP (2)}
+\begin{itemize}
+    \item \textbf{Không gian hành động ($A$):} 4 pha tín hiệu được định nghĩa trước
+    \begin{itemize}
+        \item $a_1$: Bắc-Nam ✅ (xanh) | Đông-Tây ❌ (đỏ)
+            \begin{itemize}
+                \item Xe từ Bắc/Nam đi thẳng hoặc rẽ phải
+            \end{itemize}
+        \item $a_2$: Bắc-Nam ✅ (xanh, rẽ trái) | Đông-Tây ❌ (đỏ)
+            \begin{itemize}
+                \item Chỉ cho phép xe Bắc/Nam rẽ trái
+            \end{itemize}
+        \item $a_3$: Bắc-Nam ❌ (đỏ) | Đông-Tây ✅ (xanh)
+            \begin{itemize}
+                \item Xe từ Đông/Tây đi thẳng hoặc rẽ phải
+            \end{itemize}
+        \item $a_4$: Bắc-Nam ❌ (đỏ) | Đông-Tây ✅ (xanh, rẽ trái)
+            \begin{itemize}
+                \item Chỉ cho phép xe Đông/Tây rẽ trái
+            \end{itemize}
+    \end{itemize}
+    \item Agent chọn pha mỗi 5 giây (action\_duration = 5s)
+
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Ràng buộc Thời gian Pha (Phase Duration Constraint)}
+\begin{itemize}
+    \item \textbf{Vấn đề:} Nếu Agent được phép chuyển pha tùy ý, có thể gây ra hành vi hỗn loạn:
+    \begin{itemize}
+        \item Pha xanh chỉ kéo 5 giây rồi chuyển sang đỏ → phương tiện vừa vào giao lộ không kịp qua
+        \item Sự bất ổn trong học tập → reward dao động lớn  
+    \end{itemize}
+    
+    \item \textbf{Giải pháp:} Áp dụng 3 ràng buộc thực tế:
+    \begin{itemize}
+        \item \textbf{Thời gian giữ tối thiểu:} $t_{\min} = 30$ giây
+            \begin{itemize}
+                \item Nếu Agent muốn chuyển pha nhưng đã giữ ít hơn 30s: **Giữ pha cũ** + phạt reward $-1.0$
+                \item Ví dụ: Pha xanh bắt đầu lúc 0s, Agent chỉ có thể chuyển từ lúc 30s trở đi
+            \end{itemize}
+        \item \textbf{Thời gian giữ tối đa:} $t_{\max} = 120$ giây
+            \begin{itemize}
+                \item Nếu giữ pha quá 120s: **Bắt buộc chuyển** sang pha kế tiếp (không chờ lệnh Agent)
+                \item Tránh tình huống 1 hướng chỉ xanh mãi, hướng khác chỉ đỏ mãi
+            \end{itemize}
+        \item \textbf{Phạt chuyển sớm:} Nếu chuyển pha trước 30s, nhận phạt $-1.0$ trên reward
+    \end{itemize}
+    
+    \item \textbf{Tác dụng:} Buộc Agent học được hành vi an toàn giao thông + ổn định training
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Ánh xạ bài toán đèn giao thông sang MDP (2)}
+\begin{itemize}
+\item \textbf{Hàm phần thưởng ($R$):}
+\begin{itemize}
+    \item Phần thưởng được tính dựa trên mức phạt (penalty) từ tình trạng ùn tắc hiện tại:
+    \[
+    R_t = -\left( Q_t + \frac{W_t}{60} \right) + \text{bonus}
+    \]
+    \begin{itemize}
+        \item $Q_t$: tổng số xe dừng (queue) trên tất cả các làn tại thời điểm $t$
+        \item $W_t$: tổng thời gian chờ (waiting time) trên tất cả các làn, chia 60 để chuẩn hóa
+        \item bonus (tùy chọn): thưởng theo tốc độ trung bình hoặc số xe đã qua
+    \end{itemize}
+    \item $R_t$ càng gần 0: giao thông càng thông thoáng
+    \item $R_t$ càng âm: ùn tắc càng nghiêm trọng
+\end{itemize}
+\end{itemize}
+\end{frame}
+%---------------------------------
+\begin{frame}{Chuyển đổi Trạng Thái \& Ngẫu Nhiên}
+\begin{itemize}
+    \item \textbf{Hàm Chuyển đổi:}
+    \[
+    P(s_{t+1} | s_t, a_t)
+    \]
+    
+    \item \textbf{Ba Yếu Tố Chính:}
+    \begin{itemize}
+        \item \textbf{Action:} $a_t$ quyết định pha xanh $\rightarrow$ ảnh hưởng xe qua giao lộ
+        \item \textbf{Động lực xe:} Xe qua từng chút (không tức thời), tốc độ/gia tốc hạn chế
+        \item \textbf{Xuất hiện ngẫu nhiên:} Xe mới liên tục đến $\rightarrow$ state kế tiếp không chắc chắn
+    \end{itemize}
+    
+    \item \textbf{Kết Luận:} MDP giao thông là bài toán \textbf{stochastic} (ngẫu nhiên)
+    \begin{itemize}
+        \item Không thể dự đoán 100\% state kế tiếp
+        \item Nhưng Agent có thể học ``action tốt nhất trung bình''
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \centering
+  \Huge \textbf{PHẦN 3} \\[0.5cm]
+  \LARGE Lý thuyết về Học tăng cường (Reinforcement Learning)
+\end{frame}
+
+% ===============================
+% Reinforcement Learning Theory
+% ===============================
+
+\begin{frame}{Lý thuyết về Học tăng cường}
+\begin{itemize}
+    \item Reinforcement Learning (RL) là một nhánh của Machine Learning
+    \item Mục tiêu: học cách ra quyết định tuần tự thông qua tương tác với môi trường
+    \item Agent học bằng cơ chế thử–sai (trial-and-error)
+    \item Phản hồi học tập được cung cấp dưới dạng phần thưởng (reward)
+\end{itemize}
+\end{frame}
+
+% --------------------------------
+
+\begin{frame}{Đặc điểm của Reinforcement Learning}
+\begin{itemize}
+    \item Không có nhãn đúng–sai như Supervised Learning
+    \item Phần thưởng có thể bị trễ theo thời gian
+    \item Mục tiêu là tối ưu hiệu quả dài hạn
+    \item Phù hợp với các bài toán điều khiển và ra quyết định
+\end{itemize}
+\end{frame}
+
+% --------------------------------
+
+\begin{frame}{Khung Học tăng cường (RL Framework)}
+Reinforcement Learning bao gồm các thành phần chính:
+\begin{itemize}
+    \item \textbf{Agent}: tác nhân ra quyết định
+    \item \textbf{Environment}: môi trường mà agent tương tác
+    \item \textbf{State ($s$)}: trạng thái của môi trường
+    \item \textbf{Action ($a$)}: hành động của agent
+    \item \textbf{Reward ($r$)}: phản hồi từ môi trường
+\end{itemize}
+\end{frame}
+
+% --------------------------------
+
+\begin{frame}{Quá trình tương tác Agent–Environment}
+Tại mỗi thời điểm $t$:
+\begin{enumerate}
+    \item Agent quan sát trạng thái hiện tại $s_t$
+    \item Agent chọn hành động $a_t$ theo policy
+    \item Environment chuyển sang trạng thái $s_{t+1}$
+    \item Agent nhận phần thưởng $r_{t+1}$
+\end{enumerate}
+\end{frame}
+
+% --------------------------------
+
+\begin{frame}{Giả định Markov & Mục tiêu Learning}
+\begin{itemize}
+    \item \textbf{Tính chất Markov}: Trạng thái tương lai chỉ phụ thuộc vào hiện tại
+    $$P(s_{t+1} | s_t, a_t)$$
+    \item Không phụ thuộc lịch sử → Giúp đơn giản hóa mô hình
+    
+    \item \textbf{Mục tiêu}: Tối đa hóa phần thưởng tích lũy (không phải tức thời)
+    $$G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1}$$
+    
+    \item Hệ số chiết khấu $\gamma$:
+    \begin{itemize}
+        \item $\gamma$ nhỏ → ưu tiên ngắn hạn
+        \item $\gamma$ gần 1 → ưu tiên dài hạn
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+% --------------------------------
+
+\begin{frame}
+  \centering
+  \Huge \textbf{PHẦN 4} \\[0.5cm]
+  \LARGE Deep Q-Learning (DQN) - Từ MDP sang Neural Network
+
+\end{frame}
+
+\begin{frame}{Động lực: Tại sao cần Deep Neural Network?}
+\begin{itemize}
+    \item \textbf{Bài toán giao thông:} State có 32 chiều (8 làn × 4 đặc trưng)
+    \item \textbf{Vấn đề Q-table:} Bảng Q không khả thi với không gian trạng thái liên tục/lớn
+    \begin{itemize}
+        \item State space: $\mathbb{R}^{32}$ (vô hạn!)
+        \item Action space: 4 pha (hữu hạn)
+    \end{itemize}
+    \item \textbf{Giải pháp:} Dùng mạng nơ-ron sâu (DQN) để xấp xỉ hàm Q
+    $$Q(s,a) \approx \text{Neural Network}(s)$$
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Deep Q-Learning (DQN)}
+\begin{itemize}
+    \item Deep Q-Learning (DQN) mở rộng Q-Learning bằng cách sử dụng mạng nơ-ron sâu
+    \item Mạng Q-network xấp xỉ hàm giá trị hành động $Q(s,a)$
+    \item Cho phép áp dụng RL trong không gian trạng thái lớn và liên tục
+\end{itemize}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Vấn đề của Q-Learning truyền thống}
+\begin{itemize}
+    \item Bảng Q-table không khả thi với không gian trạng thái lớn
+    \item Dữ liệu huấn luyện có tính tương quan cao
+    \item Dễ gây mất ổn định và không hội tụ
+\end{itemize}
+\begin{itemize}
+    \item[$\Rightarrow$] DQN được đề xuất để giải quyết các hạn chế này
+\end{itemize}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Kiến trúc DQN — Dueling Architecture}
+\begin{itemize}
+    \item \textbf{Q-network}: mạng chính ước lượng $Q(s,a;\theta)$
+    \item \textbf{Target network}: mạng mục tiêu $Q'(s,a;\theta^-)$
+    \item Hai mạng có cùng kiến trúc nhưng tham số được cập nhật khác nhau
+    \item Sử dụng kiến trúc \textbf{Dueling DQN}:
+    \begin{itemize}
+        \item Backbone: 2 lớp ẩn (128 neuron), LayerNorm + ReLU
+        \item Tách thành 2 nhánh: Value stream $V(s)$ và Advantage stream $A(s,a)$
+        \item Tổng hợp: $Q(s,a) = V(s) + A(s,a) - \frac{1}{|A|}\sum_{a'} A(s,a')$
+    \end{itemize}
+    \item Dueling giúp ước lượng giá trị trạng thái tốt hơn khi nhiều hành động có hiệu quả tương đương
+\end{itemize}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Experience Replay}
+\begin{itemize}
+    \item Các trải nghiệm $(s,a,r,s',d)$ được lưu vào replay buffer
+    \item Huấn luyện bằng cách lấy mẫu ngẫu nhiên minibatch
+    \item Giảm tương quan giữa các mẫu liên tiếp
+    \item Tăng tính ổn định và hiệu quả học
+\end{itemize}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Chiến lược chọn hành động - Epsilon-Greedy}
+\begin{itemize}
+    \item Sử dụng chiến lược \textbf{$\epsilon$-greedy}
+    \item Với xác suất $\epsilon$: chọn hành động ngẫu nhiên (exploration)
+    \item Với xác suất $1-\epsilon$: chọn hành động tốt nhất (exploitation)
+    \item $\epsilon$ giảm dần theo thời gian: $\epsilon(t) = \epsilon_{\text{end}} + (\epsilon_{\text{start}} - \epsilon_{\text{end}}) e^{-t/\tau}$
+\end{itemize}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Exploration vs Exploitation - Cân bằng}
+\begin{itemize}
+    \item \textbf{Exploration}: Thử các hành động mới → Tìm kiếm chiến lược tốt hơn
+    \item \textbf{Exploitation}: Sử dụng kiến thức đã học → Năng cấp tười đại
+    \item \textbf{Thách thức}: Cân bằng 2 yếu tố là côt lĩi của RL
+    \begin{itemize}
+        \item Quá nhiều exploration → Học chậm
+        \item Quá nhiều exploitation → Bị mắt trong optimal mù địa phương
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Hàm mục tiêu Temporal Difference (TD)}
+Với mỗi transition, TD target được tính như sau:
+\[
+y = r + \gamma \max_{a'} Q'(s', a')
+\]
+
+\begin{itemize}
+    \item $\gamma$: hệ số chiết khấu
+    \item $Q'$: target network
+\end{itemize}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Hàm mất mát trong DQN}
+\begin{itemize}
+    \item DQN tối ưu sai số giữa Q hiện tại và TD target
+    \item Sử dụng \textbf{Huber Loss} (Smooth L1 Loss) thay vì MSE để tăng độ ổn định:
+\end{itemize}
+
+\[
+\mathcal{L} = \mathbb{E}\left[\text{SmoothL1}(Q(s,a) - y)\right]
+\]
+
+\begin{itemize}
+    \item Huber Loss ít nhạy cảm với các giá trị ngoại lai (outlier) hơn MSE
+    \item Kết hợp gradient clipping (max\_norm = 10) để ổn định huấn luyện
+\end{itemize}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Double Deep Q-Learning}
+\begin{itemize}
+    \item DQN chuẩn có xu hướng \textbf{overestimate} giá trị Q
+    \item Double DQN tách quá trình:
+    \begin{itemize}
+        \item Chọn hành động bằng Q-network
+        \item Đánh giá giá trị bằng target network
+    \end{itemize}
+\end{itemize}
+
+\[
+y = r + \gamma Q'(s', \arg\max_a Q(s',a))
+\]
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Cập nhật Target Network}
+\begin{itemize}
+    \item \textbf{Hard update}: sao chép tham số sau mỗi $N$ bước
+    \item \textbf{Soft update}: cập nhật dần theo hệ số $\tau$
+\end{itemize}
+
+\[
+\theta^- \leftarrow \tau \theta + (1-\tau)\theta^-
+\]
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Vòng lặp huấn luyện DQN}
+\begin{enumerate}
+    \item Quan sát trạng thái hiện tại
+    \item Chọn hành động theo $\epsilon$-greedy
+    \item Tương tác với môi trường và nhận reward
+    \item Lưu trải nghiệm vào replay buffer
+    \item Lấy minibatch và cập nhật Q-network
+\end{enumerate}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Kết quả Thực nghiệm}
+\centering
+\LARGE \textbf{So sánh DQN vs Fixed-Time Controller}
+\vspace{1cm}
+
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Metrics} & \textbf{DQN} & \textbf{Fixed-Time} \\
+\hline
+Phần thưởng (reward) & ↑ Cao hơn 30\% & Baseline \\
+Thời gian chờ (avg) & ↓ -25\% & $\sim$ 180s \\
+Độ dài hàng đợi & ↓ -20\% & $\sim$ 12 xe \\
+Thông lượng (throughput) & ↑ +15\% & Cơ sở \\
+\hline
+\end{tabular}
+
+\vspace{1cm}
+\textbf{Kết luận:} DQN tối ưu hóa hiệu quả hơn điều khiển cố định
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{Ứng dụng thực tế & Hạn chế}
+\begin{itemize}
+    \item \textbf{Ưu điểm:}
+    \begin{itemize}
+        \item Tích ứng với điều kiện giao thông biến động
+        \item Học được chính sách tối ưu mà không cần mô hình vật lý
+        \item Có thể mở rộng cho lưới giao lộ phức tạp hơn
+    \end{itemize}
+    \item \textbf{Hạn chế hiện tại:}
+    \begin{itemize}
+        \item Training yêu cầu thời gian tính toán  
+        \item Chỉ Test trên 1 giao lộ đơn giản
+        \item Chưa deployed trên thực tế
+    \end{itemize}
+    \item \textbf{Hướng phát triển:} Transfer learning, multi-agent, grid-level optimization
+\end{itemize}
+\end{frame}
+
+% -----------------------------------------
+
+\begin{frame}{}
+\centering
+\vspace{2cm}
+{\LARGE \textbf{Cảm ơn cô và các bạn đã lắng nghe!}}\\[1cm]
+\end{frame}
+
+
+
