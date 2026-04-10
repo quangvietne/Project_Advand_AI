@@ -35,7 +35,7 @@ class DQNAgent:
         self.q_target.eval()
 
         self.optim = optim.Adam(self.q.parameters(), lr=cfg.lr)
-        self.crit = nn.SmoothL1Loss(reduction="none")
+        self.crit = nn.SmoothL1Loss(reduction="mean")
         self.step_count = 0
 
     @torch.no_grad()
@@ -60,7 +60,7 @@ class DQNAgent:
                 q2 = self.q_target(s2).max(dim=1).values
             target = r + (1.0 - d) * self.cfg.gamma * q2
 
-        loss = self.crit(q, target).mean()
+        loss = self.crit(q, target)
         self.optim.zero_grad(set_to_none=True)
         loss.backward()
         if self.cfg.grad_clip is not None:

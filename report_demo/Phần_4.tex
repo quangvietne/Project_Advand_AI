@@ -1,0 +1,102 @@
+\section{Chương III: Thực thi mô hình và đánh giá kết quả}
+
+
+\subsection{Thực thi mô hình}
+\href{https://colab.research.google.com/drive/1nWnl4tWVkGxb-6rVIaley-sA58jj-h5b}
+\href{https://colab.research.google.com/drive/1nWnl4tWVkGxb-6rVIaley-sA58jj-h5b}
+
+\subsubsection{Mô tả đặc điểm của các loại khối u dựa trên các đặc trưng}
+Trong dữ liệu, các đặc trưng như \texttt{radius\_mean}, \texttt{texture\_mean}, \texttt{area\_mean}, và nhiều thông số khác được sử dụng để phân tích sự khác biệt giữa hai loại u:
+
+\begin{itemize}
+    \item \textbf{Benign (B):} U lành tính.
+    \item \textbf{Malignant (M):} U ác tính.
+\end{itemize}
+
+Các chỉ số thống kê quan trọng được hiển thị qua heatmap dưới đây, cho thấy mối tương quan giữa các đặc trưng và chẩn đoán:
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{image/heatmap.png}
+\end{figure}
+
+Biểu đồ tương quan cho thấy các đặc trưng như \texttt{radius\_mean}, \texttt{area\_mean}, và \texttt{concave\_points\_mean} có mối quan hệ mạnh mẽ với chẩn đoán (\texttt{diagnosis}). Điều này gợi ý rằng các đặc trưng này có thể đóng vai trò quan trọng trong việc phân loại khối u.
+
+\subsubsection{Mô hình Naive Bayes}
+Sau khi thực thi mô hình, ta có báo cáo phân tích của mô hình Naive Bayes như sau:
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\linewidth]{image/naivebayes.png}
+    \caption{Classification report của mô hình hồi quy Naive Bayes}
+    \label{fig:enter-label}
+\end{figure}
+\subsubsection{Mô hình Random Forest}
+Sau khi thực thi mô hình, ta có báo cáo phân tích của mô hình Random Forest như sau:
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\linewidth]{image/randomforest1.png}
+    \caption{Classification report của mô hình Random Forest}
+    \label{fig:enter-label}
+\end{figure}
+
+\subsubsection{Mô hình Logistic Regression}
+
+Sau khi thực thi mô hình, ta có báo cáo phân tích của mô hình Logistic Regression như sau:
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\linewidth]{image/logistic.png}
+    \caption{Classification report của mô hình hồi quy logistic}
+    \label{fig:enter-label}
+\end{figure}
+\subsection{Đánh giá kết quả}
+\subsubsection{Một số khái niệm cần biết}
+- Ma trận nhầm lân (Confusion Matrix) là một phương pháp đánh giá kết quả của những bài toán phân loại với việc xem xét cả những chỉ số về độ chính xác và độ bao quát của các dự đoán cho từng lớp. Một confusion matrix gồm 4 chỉ số sau đối với mỗi lớp phân loại:
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\linewidth]{image/confusion.png}
+    \caption{Caption}
+    \label{fig:enter-label}
+\end{figure}
+trong đó:
+\begin{itemize}
+    \item True Positive (TP): số lượng điểm của lớp positive được phân loại đúng là positive.
+    \item True Negative (TN): số lượng điểm của lớp negative được phân loại đúng là negative.
+    \item False Positive (FP): số lượng điểm của lớp negative bị phân loại nhầm thành positive.
+    \item False Negative (FN): số lượng điểm của lớp positiv bị phân loại nhầm thành negative
+\end{itemize}
+\\ - Độ chính xác(accuracy) là tỷ lệ phần trăm tất cả các phân loại chính xác, cho dù là phân loại positive hay negative. Giá trị này được định nghĩa theo toán học là:
+\[Accuracy = \frac{TP + TN}{TP + TN + FP + FN}\]
+\\ - Precision là tỷ lệ phần trăm tất cả các kết quả phân loại dương tính của mô hình thực sự là dương tính. Nó được định nghĩa về mặt toán học là:
+\[Precision = \frac{TP}{TP + FP}\]
+\\ - Recall là tỷ lệ phần trăm tất cả các kết quả dương tính thực tế được phân loại chính xác là dương tính. Nó được định nghĩa về mặt toán học là:
+\[Recall = \frac{TP}{TP + FN}\]
+\\ Từ định nghĩa về precision va recall, có thể precision cao đồng nghĩa với việc độ chính xác của các điểm tìm được là cao. Recall cao đồng nghĩa với việc True Positive Rate cao, tức tỉ lệ bỏ sót các điểm thực sự positive là thấp.
+\\ - $F_1$ score, hay F1-score, là harmonic mean của precision và recall (giả sử rằng hai đại lượng này khác không):
+\[F_{1} score = \frac{2.precision.recall}{precision.recall}\]
+\subsubsection{So sánh tương quan giữa các mô hình}
+Ta có bảng so sánh về độ chính xác giữa các mô hình
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+    \hline
+         Mô hình & Accuracy \\
+         \hline
+         Naive Bayes & 0.924\\
+         \hline
+         Random Forest & 0.9649\\
+         \hline
+         Logistic Regression & 0.9766\\
+         \hline
+    \end{tabular}
+    \caption{Bảng so sánh về độ chính xác (accuracy) giữa các mô hình}
+    \label{tab:my_label}
+\end{table}
+\\ Từ bảng trên, ta thấy chỉ số accuracy của mô hình logistic regression là cao nhất, nhưng câu hỏi đặt ra là chỉ số accuracy cao nhất có phải là đủ để quyết định lựa chọn mô hình nào hay chưa?
+\\ Trên thực tế, chỉ số accuracy chưa thể chứng minh hoàn toàn được mô hình đó có đủ tốt hay không? Trong bài toán chẩn đoán ung thư đang được thực hiện, giả sử có hai mô hình như sau:
+\begin{itemize}
+    \item Model A đạt accuracy là 99\%. Tuy nhiên mô hình đã để lọt một trường hợp bị ung thư ác tính nhưng mô hình dự đoán là ung thư lành và người bệnh không điều trị kịp thời dẫn đến hậu quả xấu nhất là  tử vong. 
+    \item Model B đạt accuracy thấp hơn là 92\%. Nhưng sau khi thực thi thì không có trường hợp nào bị ung thư bị bỏ sót. Model chỉ đạt 92\% do có vài trường hợp không bị ung thư và bị chỉ định nhầm thành có ung thư ác tính (nhưng sau khi xét nghiệm kỹ lại thì đã khẳng định không bị ung thư và xuất viện rồi).
+\end{itemize}
+\\ Từ ví dụ trên, có thể thấy mô hình B dù có độ chính xác thấp hơn nhưng sẽ phù hợp hơn cho bài toán cần thực hiện.  
+\\ Tương tự đối với bài toán chẩn đoán ung thư đang được thực hiện, yêu cầu đặt ra là giảm thiểu tối đa khả năng dự đoán False Negative (tức là bệnh nhân ung thư ác tính bị dự đoán sai thành ung thư lành tính) nên chỉ số recall của ung thư ác tính cần được lưu ý.
+\\ Theo kết quả thực thi của các mô hình đã cho ở trên, ta thấy chỉ số Recall của 3 mô hình Naive Bayes, Random Forest và Logistic Regression lần lượt là: 0,9; 0,95 và 0,95 nên mô hình Random Forest và mô hình Logistic Regression phù hợp hơn so với mô hình Naive Bayes cho bài toán chẩn đoán ung thư đang được thực hiện.

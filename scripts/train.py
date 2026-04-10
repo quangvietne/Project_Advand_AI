@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import os
 import sys
-import time
 from pathlib import Path
 
 # Add parent directory to path so we can import from src/
@@ -10,7 +8,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 import torch
-import yaml
 from tqdm import tqdm
 
 from src.dqn.agent import DQNAgent, AgentConfig
@@ -20,7 +17,6 @@ from src.utils import LinearEpsilon
 from scripts.common import load_config, ensure_sumo_home, create_output_dir
 
 
-# Ensure SUMO is available
 ensure_sumo_home()
 
 
@@ -68,10 +64,13 @@ def main(cfg_path: str = "config.yaml") -> None:
     start_train = cfg["train"].get("start_train", 10_000)
     train_every = cfg["train"].get("train_every", 1)
     batch_size = agent_cfg.batch_size
+    out = create_output_dir(cfg.get("output_dir", "outputs"))
 
     s = state
     pbar = tqdm(range(total_steps), desc="Training", ncols=100)
     episode_reward = 0.0
+    best_episode_reward = float("-inf")
+    stats: dict = {"loss": float("nan")}
 
     try:
         for t in pbar:
@@ -85,17 +84,26 @@ def main(cfg_path: str = "config.yaml") -> None:
             if len(buffer) >= start_train and t % train_every == 0:
                 batch = buffer.sample(batch_size)
                 stats = agent.update(batch)
-            else:
-                stats = {"loss": float("nan")}
 
             if d:
-                pbar.set_postfix({"R": f"{episode_reward:.1f}", "eps": f"{eps:.2f}", "loss": f"{stats['loss']:.3f}"})
+                pbar.set_postfix({
+                    "R": f"{episode_reward:.1f}",
+                    "best": f"{best_episode_reward:.1f}",
+                    "eps": f"{eps:.2f}",
+                    "loss": f"{stats['loss']:.3f}",
+                })
+                # Save best model whenever a new high score is achieved
+                if episode_reward > best_episode_reward:
+                    best_episode_reward = episode_reward
+                    torch.save(agent.q.state_dict(), out / "dqn_vn_tls_best.pt")
+
                 s = env.reset()
                 episode_reward = 0.0
 
-        # save weights
-        out = create_output_dir(cfg.get("output_dir", "outputs"))
+        # Save final model weights
         torch.save(agent.q.state_dict(), out / "dqn_vn_tls.pt")
+        print(f"\n✓ Final model saved to {out / 'dqn_vn_tls.pt'}")
+        print(f"✓ Best model saved to  {out / 'dqn_vn_tls_best.pt'}")
     finally:
         env.close()
 

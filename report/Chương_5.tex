@@ -1,0 +1,116 @@
+\section{Chương V: Kết luận}
+
+\subsection{Tổng kết kết quả}
+
+Đề tài \textit{"Tối ưu hóa điều khiển đèn tín hiệu giao thông dựa trên Mô hình Quyết định Markov"} đã được xây dựng và thực nghiệm hoàn chỉnh với các kết quả đáng khích lệ.
+
+Nhóm đã thành công trong việc mô hình hóa bài toán điều khiển đèn tín hiệu tại một ngã tư đô thị Việt Nam dưới dạng Mô hình Quyết định Markov (MDP), triển khai thuật toán \textbf{Double DQN kết hợp Dueling Network} và huấn luyện agent trong môi trường mô phỏng SUMO với các đặc điểm giao thông đặc trưng của Việt Nam (60\% xe máy, hệ số PCU chuẩn hóa theo thực tế).
+
+Kết quả thực nghiệm so sánh với phương pháp điều khiển thời gian cố định (Fixed-Time) cho thấy hệ thống DQN đề xuất vượt trội ở hầu hết các chỉ số quan trọng:
+
+\begin{itemize}
+    \item \textbf{Giảm hàng đợi trung bình 83.6\%}: từ 31.54 xe/làn (Fixed-Time) xuống còn 5.18 xe/làn (DQN).
+    \item \textbf{Giảm thời gian chờ 99.1\%}: từ 251.15 giây xuống còn 2.25 giây.
+    \item \textbf{Tăng lưu lượng xe 9.6\%}: từ 250 xe/episode lên 274 xe/episode.
+    \item \textbf{Cải thiện tổng phần thưởng 89\%}: từ $-$34,764 lên $-$3,835.
+    \item \textbf{Ổn định hơn 5 lần}: độ lệch chuẩn hàng đợi giảm từ 8.45 xuống 1.65.
+\end{itemize}
+
+Những kết quả này chứng minh rằng Học tăng cường sâu hoàn toàn có thể ứng dụng hiệu quả vào bài toán điều khiển đèn giao thông, mang lại cải thiện đáng kể so với phương pháp truyền thống. Đặc biệt, việc tích hợp đặc thù giao thông Việt Nam (trọng số PCU xe máy, phân bố phương tiện thực tế) vào thiết kế môi trường MDP là bước tiếp cận phù hợp và cần thiết.
+
+\subsection{Ưu điểm của phương pháp đề xuất}
+
+\begin{itemize}
+    \item \textbf{Khả năng thích ứng theo thời gian thực:} Agent quan sát trạng thái giao thông liên tục và điều chỉnh pha đèn dựa trên tình huống thực tế, khác với lịch cố định không nhận biết được mật độ xe.
+
+    \item \textbf{Không cần mô hình vật lý:} Agent học trực tiếp từ tương tác với môi trường mô phỏng mà không cần biết tường minh hàm chuyển trạng thái $P(s'|s,a)$ --- một ưu điểm lớn so với các phương pháp điều khiển tối ưu truyền thống.
+
+    \item \textbf{Có thể mở rộng:} Kiến trúc và thuật toán đã xây dựng có tiềm năng mở rộng lên các kịch bản phức tạp hơn như mạng lưới nhiều nút giao, điều phối đa tác nhân (multi-agent) hoặc tích hợp dữ liệu cảm biến thực tế.
+
+    \item \textbf{Thiết kế dành riêng cho Việt Nam:} Hệ số PCU theo chuẩn Việt Nam, phân bố xe máy chiếm ưu thế và các ràng buộc an toàn thực tế được tích hợp trực tiếp vào thiết kế, tạo nên điểm khác biệt so với các nghiên cứu quốc tế.
+\end{itemize}
+
+\subsection{Hạn chế và hướng phát triển}
+
+\subsubsection{Hạn chế hiện tại}
+
+\begin{itemize}
+    \item \textbf{Phạm vi thực nghiệm còn hẹp:} Dự án chỉ kiểm thử trên một ngã tư đơn với lưu lượng giao thông được tạo theo xác suất ngẫu nhiên. Kết quả cần được xác nhận lại trên dữ liệu giao thông thực tế hoặc các kịch bản phức tạp hơn (nút T, vòng xuyến, mạng lưới nhiều nút).
+
+    \item \textbf{Thời gian huấn luyện:} Quá trình huấn luyện 200.000 bước yêu cầu 30--60 phút tính toán. Điều này chưa phù hợp cho các ứng dụng cần học online và thích ứng ngay lập tức với thay đổi điều kiện giao thông.
+
+    \item \textbf{Chưa triển khai thực tế:} Toàn bộ kết quả được kiểm chứng trong môi trường mô phỏng SUMO. Khoảng cách giữa mô phỏng và thực tế (sim-to-real gap) cần được đánh giá kỹ lưỡng trước khi có thể triển khai tại các nút giao thông thực.
+
+    \item \textbf{Tốc độ lưu thông:} Trong một số kịch bản, tốc độ trung bình của DQN thấp hơn Fixed-Time do cách đo lường bao gồm cả xe đang dừng chờ pha. Cần nghiên cứu thêm chỉ số này.
+\end{itemize}
+
+\subsubsection{Hướng phát triển tương lai}
+
+\begin{itemize}
+    \item \textbf{Multi-Agent Reinforcement Learning (MARL):} Mở rộng từ điều khiển một nút giao lên điều phối đồng thời nhiều nút trong một mạng lưới giao thông, sử dụng các agent học cách phối hợp với nhau để tối ưu luồng xe trên toàn tuyến.
+
+    \item \textbf{Transfer Learning:} Tận dụng trọng số model đã huấn luyện (\texttt{dqn\_vn\_tls.pt}) làm điểm khởi đầu (pretrained model) cho các kịch bản mới, giảm đáng kể thời gian huấn luyện từ đầu.
+
+    \item \textbf{Tích hợp dữ liệu thực tế:} Thay thế phân bố xe ngẫu nhiên bằng dữ liệu lưu lượng giao thông thực tế từ camera hoặc cảm biến tại các nút giao thực sự ở Hà Nội.
+
+    \item \textbf{Phần thưởng nâng cao:} Bổ sung vào hàm reward các yếu tố như mức độ ô nhiễm khí thải, tiêu hao nhiên liệu và mức độ an toàn giao thông để tối ưu hóa toàn diện hơn.
+
+    \item \textbf{Triển khai nhúng (Edge Deployment):} Nghiên cứu nén mô hình (model pruning, quantization) để có thể chạy trực tiếp trên phần cứng nhúng tại nút đèn tín hiệu với tài nguyên tính toán hạn chế.
+\end{itemize}
+
+\newpage
+\section*{Tài liệu tham khảo}
+\addcontentsline{toc}{section}{Tài liệu tham khảo}
+
+\begin{thebibliography}{9}
+
+\bibitem{bellman1957}
+R. Bellman,
+\textit{``A Markovian Decision Process,''}
+Journal of Mathematics and Mechanics, vol. 6, no. 5, pp. 679--684, 1957.
+
+\bibitem{sutton2018}
+R. S. Sutton and A. G. Barto,
+\textit{Reinforcement Learning: An Introduction}, 2nd ed.
+Cambridge, MA: MIT Press, 2018.
+
+\bibitem{mnih2015}
+V. Mnih, K. Kavukcuoglu, D. Silver et al.,
+\textit{``Human-level control through deep reinforcement learning,''}
+Nature, vol. 518, pp. 529--533, 2015.
+
+\bibitem{hasselt2016}
+H. van Hasselt, A. Guez, and D. Silver,
+\textit{``Deep Reinforcement Learning with Double Q-learning,''}
+in \textit{Proc. 30th AAAI Conference on Artificial Intelligence (AAAI)},
+Phoenix, AZ, 2016, pp. 2094--2100.
+
+\bibitem{wang2016}
+Z. Wang, T. Schaul, M. Hessel, H. van Hasselt, M. Lanctot, and N. de Freitas,
+\textit{``Dueling Network Architectures for Deep Reinforcement Learning,''}
+in \textit{Proc. 33rd International Conference on Machine Learning (ICML)},
+New York, NY, 2016, pp. 1995--2003.
+
+\bibitem{lopez2018}
+P. A. Lopez, M. Behrisch, L. Bieker-Walz et al.,
+\textit{``Microscopic Traffic Simulation using SUMO,''}
+in \textit{Proc. 21st IEEE International Conference on Intelligent Transportation Systems (ITSC)},
+Maui, HI, 2018, pp. 2575--2582.
+
+\bibitem{wei2018}
+H. Wei, G. Zheng, H. Yao, and Z. Li,
+\textit{``IntelliLight: A Reinforcement Learning Approach for Intelligent Traffic Light Control,''}
+in \textit{Proc. 24th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining (KDD)},
+London, UK, 2018, pp. 2496--2505.
+
+\bibitem{genders2016}
+W. Genders and S. Razavi,
+\textit{``Using a Deep Reinforcement Learning Agent for Traffic Signal Control,''}
+arXiv preprint arXiv:1611.01142, 2016.
+
+\bibitem{liang2019}
+X. Liang, X. Du, G. Wang, and Z. Han,
+\textit{``A Deep Reinforcement Learning Network for Traffic Light Cycle Control,''}
+IEEE Transactions on Vehicular Technology, vol. 68, no. 2, pp. 1243--1253, 2019.
+
+\end{thebibliography}

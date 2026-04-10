@@ -1,0 +1,50 @@
+\section{Mở đầu}
+
+\subsection{Lý do chọn đề tài}
+
+\begin{itemize}
+    \item Tình trạng ùn tắc giao thông tại các đô thị lớn của Việt Nam, đặc biệt là Hà Nội và TP. Hồ Chí Minh, đang ngày càng trở nên nghiêm trọng. Theo báo cáo của Ủy ban An toàn Giao thông Quốc gia, ùn tắc giao thông gây thiệt hại kinh tế ước tính hàng tỷ đồng mỗi ngày, đồng thời làm tăng mức độ ô nhiễm không khí và ảnh hưởng trực tiếp đến chất lượng cuộc sống của người dân.
+
+    \item Hệ thống đèn tín hiệu giao thông hiện tại tại Việt Nam chủ yếu vẫn sử dụng phương pháp \textbf{điều khiển thời gian cố định} (Fixed-Time Control), trong đó mỗi pha đèn được cài đặt sẵn một khoảng thời gian không thay đổi bất kể mật độ giao thông thực tế. Phương pháp này đơn giản nhưng thiếu linh hoạt và không tối ưu trong các điều kiện giao thông biến động theo giờ, theo ngày hoặc theo sự kiện đặc biệt.
+
+    \item Giao thông đô thị Việt Nam có đặc thù riêng so với các nước phát triển: tỷ lệ xe máy chiếm khoảng \textbf{60--70\%} tổng lưu lượng phương tiện, cao hơn nhiều so với ô tô hay xe buýt. Sự đa dạng về loại phương tiện (xe máy, ô tô, xe buýt, xe tải) với kích thước và tốc độ khác nhau đặt ra yêu cầu đặc biệt khi xây dựng hệ thống điều khiển thông minh.
+
+    \item Những năm gần đây, \textbf{Học tăng cường sâu} (Deep Reinforcement Learning --- DRL) đã cho thấy hiệu quả vượt trội trong các bài toán điều khiển và tối ưu hóa phức tạp. Việc ứng dụng DRL, cụ thể là \textbf{Mô hình Quyết định Markov (MDP)} kết hợp với thuật toán \textbf{Deep Q-Network (DQN)}, vào bài toán điều khiển đèn tín hiệu mở ra hướng tiếp cận mới: hệ thống có thể \textit{tự học} từ dữ liệu giao thông thực tế và liên tục điều chỉnh phương án điều khiển nhằm giảm thiểu thời gian chờ, hàng đợi và tắc nghẽn.
+
+    \item Tuy nhiên, hầu hết các nghiên cứu hiện có về DRL cho điều khiển đèn giao thông đều được thực hiện trên các kịch bản giao thông châu Âu hoặc Bắc Mỹ, chưa phản ánh đúng đặc thù của giao thông Việt Nam. Vì vậy, \textbf{việc xây dựng một hệ thống điều khiển đèn thông minh được thiết kế riêng cho điều kiện giao thông Việt Nam} là cấp thiết và có ý nghĩa thực tiễn cao.
+\end{itemize}
+
+\subsection{Mục tiêu dự án}
+
+Nhận thấy sự cấp thiết và tiềm năng của hướng nghiên cứu trên, nhóm đã xây dựng đề tài \textit{"Tối ưu hóa điều khiển đèn tín hiệu giao thông dựa trên Mô hình Quyết định Markov"} với các mục tiêu cụ thể như sau:
+
+\begin{itemize}
+    \item \textbf{Xây dựng môi trường mô phỏng giao thông} tại ngã tư đô thị Hà Nội mẫu sử dụng phần mềm SUMO (Simulation of Urban MObility), tích hợp phân bố phương tiện đặc trưng Việt Nam (60\% xe máy, 30\% ô tô, 10\% xe buýt/xe tải) và hệ số quy đổi PCU (Passenger Car Unit) phù hợp thực tế.
+
+    \item \textbf{Mô hình hóa bài toán điều khiển đèn tín hiệu} dưới dạng Mô hình Quyết định Markov (MDP), trong đó xác định rõ không gian trạng thái (hàng đợi, tốc độ, thời gian chờ, trọng số PCU theo làn), không gian hành động (4 pha đèn giao thông), và hàm phần thưởng phản ánh mức độ ùn tắc.
+
+    \item \textbf{Triển khai thuật toán Double DQN kết hợp Dueling Network} để huấn luyện agent điều khiển đèn tự động, có khả năng thích ứng với biến động giao thông theo thời gian thực.
+
+    \item \textbf{So sánh, đánh giá định lượng} hiệu quả của DQN agent so với phương pháp điều khiển thời gian cố định (baseline) thông qua các chỉ số: độ dài hàng đợi trung bình, thời gian chờ, tốc độ lưu thông và lưu lượng xe qua nút.
+\end{itemize}
+
+\subsection{Phạm vi nghiên cứu}
+
+\begin{itemize}
+    \item \textbf{Đối tượng nghiên cứu:} Hệ thống điều khiển đèn tín hiệu tại nút giao thông 4 hướng (ngã tư) trong môi trường đô thị Việt Nam.
+    \item \textbf{Công cụ mô phỏng:} Phần mềm SUMO kết hợp giao tiếp qua TraCI API.
+    \item \textbf{Ngôn ngữ lập trình:} Python 3.9+ với framework PyTorch 2.2+.
+    \item \textbf{Phạm vi thực nghiệm:} Kịch bản mô phỏng ngã tư mẫu với thời gian 1 giờ (3600 giây), huấn luyện 200.000 bước.
+\end{itemize}
+
+\subsection{Cấu trúc báo cáo}
+
+Báo cáo được tổ chức thành các phần như sau:
+
+\begin{itemize}
+    \item \textbf{Chương I --- Mở đầu:} Lý do chọn đề tài, mục tiêu, phạm vi nghiên cứu.
+    \item \textbf{Chương II --- Cơ sở lý thuyết:} Mô hình Quyết định Markov, Học tăng cường, Deep Q-Network, Double DQN và Dueling Network.
+    \item \textbf{Chương III --- Phương pháp đề xuất:} Thiết kế môi trường MDP, kiến trúc mạng, hàm phần thưởng và các ràng buộc an toàn.
+    \item \textbf{Chương IV --- Thực nghiệm và Đánh giá:} Kết quả mô phỏng, so sánh DQN vs Fixed-Time, phân tích định lượng.
+    \item \textbf{Chương V --- Kết luận:} Tổng kết kết quả, hạn chế và hướng phát triển.
+\end{itemize}

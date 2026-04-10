@@ -1,0 +1,40 @@
+\section*{Phân công nhiệm vụ}
+\addcontentsline{toc}{section}{Phân công nhiệm vụ}
+
+Dự án được thực hiện với sự tham gia của 2 thành viên, mỗi người đảm nhận các nhiệm vụ cụ thể như sau:
+
+\subsection*{Nguyễn Quang Việt --- Nhóm trưởng (MSSV: 22001659)}
+\begin{itemize}
+    \item Chịu trách nhiệm chính tổng thể dự án, phân công và điều phối công việc nhóm.
+    \item Thiết kế kiến trúc hệ thống: xây dựng môi trường MDP (\texttt{SumoMDPEnv}) kết nối SUMO qua TraCI.
+    \item Xây dựng và huấn luyện mô hình Double DQN kết hợp Dueling Network (\texttt{src/dqn/}).
+    \item Thiết lập kịch bản mô phỏng ngã tư Hà Nội mẫu (file XML SUMO).
+    \item Viết báo cáo: Chương 1 (Đặt vấn đề), Chương 2 (Cơ sở lý thuyết MDP và DQN), Chương 3 (Phương pháp đề xuất).
+    \item Xây dựng script huấn luyện (\texttt{train.py}) và các script so sánh chiến lược.
+\end{itemize}
+
+\subsection*{Phùng Hữu Uy --- Thành viên (MSSV: 22001654)}
+\begin{itemize}
+    \item Nghiên cứu và xây dựng bộ điều khiển thời gian cố định (\texttt{FixedTimeController}) làm baseline so sánh.
+    \item Thiết kế hàm phần thưởng (reward function) phù hợp với bài toán giao thông Việt Nam.
+    \item Xây dựng module đánh giá và trực quan hóa kết quả (\texttt{src/utils/plotting.py}).
+    \item Thực hiện thực nghiệm so sánh DQN vs Fixed-Time và phân tích kết quả định lượng.
+    \item Viết báo cáo: Chương 4 (Thực nghiệm và đánh giá kết quả), Chương 5 (Kết luận).
+    \item Xây dựng các Jupyter Notebook đánh giá và trực quan hóa cho Chương 4.
+\end{itemize}
+
+\vspace{12pt}
+Mỗi thành viên đều hỗ trợ lẫn nhau trong các giai đoạn quan trọng của dự án, bao gồm debug môi trường SUMO, tinh chỉnh tham số huấn luyện và hoàn thiện bản báo cáo, nhằm đảm bảo hoàn thành công việc đúng tiến độ và đạt chất lượng tốt nhất.
+
+\vspace{10pt}
+\begin{center}
+\begin{tabular}{|l|c|p{7cm}|}
+\hline
+\textbf{Họ và tên} & \textbf{MSSV} & \textbf{Nhiệm vụ chính} \\
+\hline
+Nguyễn Quang Việt (Nhóm trưởng) & 22001659 & Kiến trúc hệ thống, MDP, Double DQN, Chương 1--3 \\
+\hline
+Phùng Hữu Uy & 22001654 & Baseline, Đánh giá, Trực quan hóa, Chương 4--5 \\
+\hline
+\end{tabular}
+\end{center}

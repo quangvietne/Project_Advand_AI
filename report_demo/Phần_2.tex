@@ -1,0 +1,129 @@
+\section{Chương I: Cơ sở lý thuyết}
+Trong lĩnh vực y tế, việc thiết lập các mô hình thông qua phương pháp học máy có thể hỗ trợ các bác sĩ cải thiện tỷ lệ chẩn đoán ung thư (lành tính và ác tính), nhằm đạt được mục đích phát hiện sớm và điều trị sớm. Phương pháp học máy đã mang lại kết quả tốt trong chẩn đoán ung thư. Mặc dù hiện có nhiều phương pháp học máy được áp dụng để phân loại tế bào ung thư vú nhưng không có thuật toán đơn lẻ nào có thể áp dụng cho tất cả các vấn đề. Mỗi loại thuật toán học máy đều có lĩnh vực chuyên môn riêng, do đó việc lựa chọn thuật toán sẽ khác nhau trong các tình huống khác nhau.
+\subsection{Vấn Đề Cần Giải Quyết}
+Ung thư vú là một trong những bệnh ung thư phổ biến và là nguyên nhân gây tử vong hàng đầu ở phụ nữ. Việc phát hiện sớm và dự đoán nguy cơ ung thư vú có thể cứu sống hàng triệu người. Các vấn đề chính trong việc dự đoán ung thư vú bao gồm:
+\begin{itemize}
+    \item {} Xử lý và phân tích các đặc trưng của dữ liệu bệnh nhân, như sinh thiết hoặc các chỉ số xét nghiệm.
+    \item {}Xây dựng mô hình dự đoán chính xác để phân loại các trường hợp ung thư vú thành các nhóm ác tính và lành tính
+    \item {} Đảm bảo tính chính xác và độ tin cậy của mô hình để hỗ trợ bác sĩ đưa ra quyết định điều trị.
+\end{itemize}
+\subsection{Tổng Quan Về Dự Đoán Ung Thư Vú}
+Dự đoán ung thư vú có thể được thực hiện qua nhiều phương pháp và công cụ khác nhau. Các mô hình máy học, bao gồm các thuật toán học có giám sát như Navie Bayes, Random Forest, và Logistic Regresion, đã được sử dụng để dự đoán sự xuất hiện và giai đoạn của ung thư vú. Dữ liệu đầu vào của mô hình dự đoán ung thư vú bao gồm các đặc trưng (features) được tính toán từ các tế bào nhân vú, cùng với nhãn lớp (class) thể hiện kết quả chẩn đoán là \textbf{benign} (khối u lành tính) hoặc \textbf{malignant} (khối u ác tính). Dưới đây là mô tả chi tiết về các thuộc tính trong bộ dữ liệu:
+
+\subsubsection*{ID number}
+\begin{itemize}
+    \item \textbf{Mô tả}: Số nhận dạng duy nhất của mỗi bệnh nhân hoặc mẫu.
+\end{itemize}
+
+\subsubsection*{Diagnosis (M, B)}
+\begin{itemize}
+    \item \textbf{Mô tả}: Nhãn phân loại kết quả chẩn đoán.
+    \begin{itemize}
+        \item \textbf{M}: Malignant (Ác tính)
+        \item \textbf{B}: Benign (Lành tính)
+    \end{itemize}
+\end{itemize}
+
+\subsubsection*{Các đặc trưng hình học và thống kê của tế bào (tính toán từ các tế bào nhân vú)}
+Các đặc trưng này được tính toán từ các hình ảnh chụp tế bào và bao gồm các chỉ số mô tả hình học, kết cấu và độ mịn của các khối u trong vú. Mỗi đặc trưng có ba giá trị được tính: giá trị trung bình, độ lệch chuẩn và giá trị "tồi tệ nhất" (largest).
+
+\subsubsubsection*{Các đặc trưng trung bình}
+\begin{itemize}
+    \item \textbf{Radius}: Giá trị trung bình của các khoảng cách từ tâm đến các điểm trên đường viền của tế bào.
+    \item \textbf{Texture}: Độ lệch chuẩn của các giá trị độ xám trong hình ảnh.
+    \item \textbf{Perimeter}: Chu vi của khối u.
+    \item \textbf{Area}: Diện tích của khối u.
+    \item \textbf{Smoothness}: Sự thay đổi trong độ dài của bán kính tại các điểm khác nhau trên tế bào.
+    \item \textbf{Compactness}: Tính chặt chẽ của khối u, tính toán bằng công thức $\left(\frac{\text{Perimeter}^2}{\text{Area}}\right) - 1.0$.
+    \item \textbf{Concavity}: Mức độ nghiêm trọng của các phần lõm của khối u.
+    \item \textbf{Concave Points}: Số lượng các phần lõm của đường viền khối u.
+    \item \textbf{Symmetry}: Độ đối xứng của khối u.
+    \item \textbf{Fractal Dimension}: Đo lường độ phức tạp của hình dạng khối u, thường được sử dụng để mô phỏng dạng của các "đường bờ biển".
+\end{itemize}
+
+\subsubsection*{Các đặc trưng độ lệch chuẩn}
+Các giá trị này mô tả sự biến thiên của các đặc trưng trong các hình ảnh.
+\begin{itemize}
+    \item Ví dụ: \textbf{Radius SE} (Độ lệch chuẩn của bán kính).
+\end{itemize}
+
+\subsubsection*{Các đặc trưng "tồi tệ nhất"}
+Các giá trị tồi tệ nhất được tính là trung bình của ba giá trị lớn nhất của mỗi đặc trưng.
+\begin{itemize}
+    \item Ví dụ: \textbf{Worst Radius} (Bán kính lớn nhất trong ba giá trị lớn nhất).
+\end{itemize}
+
+\subsubsection*{Class Distribution}
+\begin{itemize}
+    \item \textbf{357 benign} (lành tính)
+    \item \textbf{212 malignant} (ác tính)
+\end{itemize}
+
+\subsubsection*{Missing Values}
+\begin{itemize}
+    \item \textbf{Không có giá trị thiếu}: Dữ liệu không có giá trị thiếu cho bất kỳ thuộc tính nào.
+\end{itemize}
+
+\subsubsection*{Tổng quan về đặc trưng}
+Bộ dữ liệu có tổng cộng \textbf{30 đặc trưng}, bao gồm các đặc trưng tính trung bình, độ lệch chuẩn và giá trị tồi tệ nhất của các yếu tố như bán kính, chu vi, diện tích, tính mịn, độ chặt chẽ, độ lõm, v.v. Nhãn lớp sẽ giúp phân loại mẫu là \textbf{benign} hoặc \textbf{malignant}, đây là mục tiêu cuối cùng của mô hình học máy trong dự đoán ung thư vú.
+\subsection{Tiêu chí đánh giá các đặc trưng}
+\subsubsection{Điểm Lõm (Concave Points)}
+U ác tính:
+\begin{itemize}
+    \item Giá trị trung bình cao hơn.
+    \item Độ biến thiên lớn hơn.
+    \item Số lượng điểm lõm nhiều hơn.
+\end{itemize}
+\subsubsection{Chu Vi (Perimeter)}
+Đặc điểm ở u ác tính
+\begin{itemize}
+    \item Chu vi lớn hơn đáng kể.
+    \item Tăng dần ở các nhóm đặc trưng (mean, SE, worst).
+    \item Biểu thị sự phát triển không kiểm soát của khối u.
+\end{itemize}
+\subsubsection{Diện Tích (Area)}
+Tiêu chí phân biệt
+\begin{itemize}
+    \item U ác tính có diện tích lớn hơn.
+    \item Tăng dần ở các nhóm đặc trưng.
+    \item Phản ánh sự phát triển khối u.
+\end{itemize}
+\subsubsection{Bán Kính (Radius)}
+Đặc điểm phân loại
+\begin{itemize}
+    \item U ác tính có bán kính lớn hơn.
+    \item Tăng dần từ nhóm trung bình đến nhóm giá trị cực đại.
+    \item Cho thấy sự lan rộng của khối u.
+\end{itemize}
+\subsubsection{Độ Chặt (Compactness)}
+Tiêu chí quan trọng 
+\begin{itemize}
+    \item U ác tính có độ chặt thấp hơn.
+    \item Biểu thị sự không đều đặn của khối u.
+    \item Phản ánh tính xâm lấn.
+\end{itemize}
+% \begin{itemize}
+%     \item {}: .
+% \end{itemize}
+\subsection{Nguyên tắc phân loại tổng thể}
+\subsubsection{Nguyên tắc cơ bản}
+\begin{itemize}
+    \item Không dựa vào một đặc trưng duy nhất.
+    \item Xem xét tổng thể các đặc trưng.
+    \item Đánh giá mối tương quan giữa các đặc trưng.
+\end{itemize}
+\subsection{Các Phương Pháp Dự Đoán Ung Thư Vú}
+\subsubsection{Phương Pháp Học Máy (Machine Learning)}
+Học máy là một trong những công cụ chính trong dự đoán ung thư vú. Các thuật toán học máy có thể học và phân loại các mẫu dữ liệu để xác định sự hiện diện của ung thư. Các phương pháp học máy phổ biến bao gồm:
+\begin{itemize}
+    \item {Navie Bayes:} là một phương pháp phân loại dựa trên định lý Bayes với giả định độc lập giữa các đặc trưng. Phương pháp này đặc biệt hữu ích khi dữ liệu có nhiều đặc trưng và có thể được mô hình hóa tốt với phân phối xác suất.
+    \item {Logistic Regression:} là một phương pháp phân loại tuyến tính sử dụng hàm logistic (hay còn gọi là hàm sigmoid) để dự đoán xác suất của các lớp phân loại. Mặc dù tên gọi là hồi quy, logistic regression thực sự là một phương pháp phân loại.
+    \item {Random Forest:} là một phương pháp học máy ensemble, trong đó sử dụng nhiều cây quyết định (decision trees) để đưa ra dự đoán. Mỗi cây quyết định trong rừng được huấn luyện trên một mẫu ngẫu nhiên của dữ liệu và các đặc trưng ngẫu nhiên.
+\end{itemize}
+\subsubsection{Chuẩn hóa dữ liệu}
+Trước khi áp dụng các thuật toán học máy, dữ liệu cần được chuẩn hóa để đảm bảo tính đồng nhất và dễ dàng xử lý. Một trong các phương pháp chuẩn hóa phổ biến là StandardScaler, giúp chuẩn hóa các đặc trưng về cùng một phạm vi (giữa 0 và 1), điều này rất quan trọng trong các mô hình học máy.
+\subsubsection{Đánh Giá Mô Hình}
+Để đảm bảo mô hình dự đoán ung thư vú chính xác, cần phải đánh giá hiệu suất của mô hình qua các chỉ số như độ chính xác (accuracy), độ nhạy (sensitivity), độ đặc hiệu (specificity).
+
+\subsection{Tầm Quan Trọng Của Dự Đoán Sớm}
+Phát hiện ung thư vú ở giai đoạn sớm có thể giúp tăng khả năng điều trị thành công. Các phương pháp dự đoán ung thư vú giúp giảm thiểu số lượng ca bệnh tiến triển và giảm tỷ lệ tử vong do ung thư vú, mang lại lợi ích lớn cho sức khỏe cộng đồng.

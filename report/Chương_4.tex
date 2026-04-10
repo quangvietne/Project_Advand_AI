@@ -1,0 +1,159 @@
+\section{Chương IV: Thực nghiệm và Đánh giá kết quả}
+
+\subsection{Thiết lập thực nghiệm}
+
+\subsubsection{Môi trường và cấu hình mô phỏng}
+
+Toàn bộ thực nghiệm được thực hiện trên kịch bản ngã tư mẫu Hà Nội trong phần mềm SUMO, với các tham số cấu hình như sau:
+
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Tham số} & \textbf{Giá trị} \\
+\hline
+Kịch bản & Ngã tư 4 hướng, Hà Nội mẫu \\
+Thời gian bước mô phỏng & 1.0 giây \\
+Thời gian mỗi episode & 3600 bước (1 giờ) \\
+Thời gian khởi động (warmup) & 60 bước \\
+Khoảng thời gian mỗi hành động & 5 giây \\
+Chế độ GUI & Tắt (headless) \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Các chỉ số đánh giá}
+
+Hiệu quả của hai chiến lược điều khiển được đánh giá qua 5 chỉ số chính:
+
+\begin{itemize}
+    \item \textbf{Độ dài hàng đợi trung bình} (Avg Queue Length): số xe dừng trung bình trên tất cả các làn trong suốt episode. Chỉ số này phản ánh trực tiếp mức độ ùn tắc.
+
+    \item \textbf{Độ dài hàng đợi cực đại} (Max Queue Length): số xe dừng lớn nhất ghi nhận tại bất kỳ thời điểm nào, đo lường khả năng xử lý đỉnh ùn tắc.
+
+    \item \textbf{Thời gian chờ trung bình} (Avg Wait Time): thời gian chờ trung bình (giây) mỗi bước đo, phản ánh mức độ khó chịu của người tham gia giao thông.
+
+    \item \textbf{Lưu lượng xe qua nút} (Throughput): tổng số xe rời khỏi khu vực mô phỏng thành công trong một episode.
+
+    \item \textbf{Tổng phần thưởng} (Total Reward): tổng phần thưởng $\sum_t R_t$ tích lũy của agent trong một episode, là chỉ số tổng hợp trực tiếp của hàm mục tiêu.
+\end{itemize}
+
+\subsubsection{Phương pháp baseline}
+
+Bộ điều khiển thời gian cố định (Fixed-Time) được cấu hình với chu kỳ 120 giây:
+
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Tham số} & \textbf{Giá trị} \\
+\hline
+Chiến lược & Luân chuyển pha cố định \\
+Số pha trong chu kỳ & 4 \\
+Thời gian xanh mỗi pha & 25 giây \\
+Thời gian vàng mỗi pha & 5 giây \\
+Tổng chu kỳ & 120 giây \\
+Khả năng thích ứng & Không có \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Kết quả so sánh DQN và Fixed-Time}
+
+\subsubsection{Bảng so sánh tổng quan}
+
+Bảng dưới đây tổng hợp kết quả trung bình từ thực nghiệm so sánh song song giữa hai chiến lược điều khiển trên cùng kịch bản giao thông:
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Chỉ số} & \textbf{DQN} & \textbf{Fixed-Time} & \textbf{Chênh lệch} & \textbf{Tốt hơn} \\
+\hline
+Hàng đợi trung bình (xe) & 5.18 & 31.54 & $-$26.36 & DQN \checkmark \\
+Hàng đợi cực đại (xe) & 12.00 & 45.00 & $-$33.00 & DQN \checkmark \\
+Độ lệch chuẩn hàng đợi & 1.65 & 8.45 & $-$6.80 & DQN \checkmark \\
+Thời gian chờ TB (s) & 2.25 & 251.15 & $-$248.89 & DQN \checkmark \\
+Lưu lượng xe (xe/ep.) & 274 & 250 & $+$24 & DQN \checkmark \\
+Tổng phần thưởng & $-$3.835 & $-$34.764 & $+$30.929 & DQN \checkmark \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Phân tích từng chỉ số}
+
+\textbf{(1) Độ dài hàng đợi:}
+
+DQN duy trì hàng đợi trung bình chỉ \textbf{5.18 xe/làn}, so với \textbf{31.54 xe/làn} của Fixed-Time --- tương đương mức giảm \textbf{83.6\%}. Đặc biệt đáng chú ý là hàng đợi cực đại của DQN chỉ đạt 12 xe trong khi Fixed-Time lên đến 45 xe, tức DQN kiểm soát được các đỉnh ùn tắc tốt hơn \textbf{3.75 lần}.
+
+Ngoài ra, độ lệch chuẩn hàng đợi của DQN (1.65) thấp hơn Fixed-Time (8.45) gần \textbf{5 lần}, cho thấy agent học được chính sách điều khiển \textit{ổn định và nhất quán} theo thời gian, thay vì để xảy ra các đợt ùn tắc cục bộ như điều khiển cố định.
+
+\textbf{(2) Thời gian chờ:}
+
+Thời gian chờ trung bình của DQN là \textbf{2.25 giây/bước}, giảm \textbf{99.1\%} so với Fixed-Time (\textbf{251.15 giây/bước}). Đây là cải thiện nổi bật nhất, phản ánh rằng agent DQN đã học được cách phân bổ pha xanh đúng lúc và đúng hướng, tránh để xe dừng tích lũy thời gian chờ dài.
+
+Kết quả từ thực nghiệm độc lập trên bộ dữ liệu Chương 4 (2 episode) cũng xác nhận kết quả này: DQN đạt thời gian chờ trung bình \textbf{8.46 giây} trong khi Fixed-Time là \textbf{2243.91 giây} --- mức chênh lệch hơn \textbf{265 lần}.
+
+\textbf{(3) Lưu lượng xe (Throughput):}
+
+DQN cho phép \textbf{274 xe} qua nút trong một episode so với \textbf{250 xe} của Fixed-Time, tăng \textbf{9.6\%}. Điều này cho thấy DQN không chỉ giảm ùn tắc mà còn cải thiện năng lực thông hành của nút giao, cho phép nhiều xe hoàn thành hành trình hơn trong cùng thời gian.
+
+\textbf{(4) Tổng phần thưởng:}
+
+Tổng phần thưởng của DQN đạt \textbf{$-$3,835} so với \textbf{$-$34,764} của Fixed-Time. Vì phần thưởng được định nghĩa là giá trị âm tỉ lệ với mức độ ùn tắc, phần thưởng DQN cao hơn \textbf{89\%} khẳng định rằng agent đã tối ưu hóa thành công hàm mục tiêu đề ra.
+
+\subsection{Phân tích cơ chế hoạt động của DQN Agent}
+
+\subsubsection{Chiến lược thích ứng được học}
+
+Qua quá trình huấn luyện 200.000 bước, agent DQN học được các hành vi thích ứng sau:
+
+\begin{itemize}
+    \item \textbf{Ưu tiên làn có hàng đợi dài:} Agent học cách quan sát đặc trưng hàng đợi $q_i$ và tập trung thời gian xanh cho các hướng đang tích lũy xe, thay vì luân chuyển đều đặn theo chu kỳ cố định.
+
+    \item \textbf{Giữ pha đủ lâu:} Nhờ ràng buộc $t_{\min} = 30$s và phạt chuyển sớm, agent học được hành vi giữ pha đủ thời gian để xe có thể qua giao lộ, tránh tình trạng chuyển pha liên tục gây mất hiệu quả.
+
+    \item \textbf{Không giữ pha quá lâu:} Ràng buộc $t_{\max} = 120$s đảm bảo agent không ``bỏ quên'' các hướng khác trong thời gian dài, giúp phân bổ thời gian xanh công bằng hơn so với Fixed-Time.
+\end{itemize}
+
+\subsubsection{So sánh đặc điểm hai chiến lược}
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Đặc điểm} & \textbf{Fixed-Time} & \textbf{DQN} \\
+\hline
+Khả năng thích ứng & Không có & Theo thời gian thực \\
+Nhận thức trạng thái giao thông & Không & Có (vector 32 chiều) \\
+Khả năng học & Không & Có (RL) \\
+Tối ưu hóa & Xác định trước & Dựa trên kinh nghiệm \\
+Chi phí tính toán & Rất thấp & Vừa phải \\
+Độ phức tạp triển khai & Đơn giản & Phức tạp hơn \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Đánh giá tổng kết}
+
+\subsubsection{Kết quả đạt được}
+
+Thực nghiệm cho thấy hệ thống điều khiển đèn dựa trên Double DQN + Dueling Network vượt trội hơn phương pháp điều khiển thời gian cố định trên hầu hết các chỉ số quan trọng:
+
+\begin{itemize}
+    \item Giảm hàng đợi trung bình \textbf{83.6\%} (5.18 xe so với 31.54 xe).
+    \item Giảm thời gian chờ trung bình \textbf{99.1\%} (2.25s so với 251.15s).
+    \item Tăng lưu lượng xe qua nút \textbf{9.6\%} (274 xe so với 250 xe).
+    \item Cải thiện tổng phần thưởng \textbf{89\%} ($-$3,835 so với $-$34,764).
+    \item Hàng đợi ổn định hơn (độ lệch chuẩn thấp hơn 5 lần).
+\end{itemize}
+
+\subsubsection{Hạn chế và ghi nhận}
+
+Bên cạnh các kết quả tích cực, thực nghiệm cũng ghi nhận một số hạn chế cần lưu ý:
+
+\begin{itemize}
+    \item \textbf{Tốc độ trung bình:} Trong kịch bản so sánh song song, tốc độ trung bình của DQN (1.97 m/s) thấp hơn Fixed-Time (2.44 m/s). Điều này có thể do DQN giữ nhiều xe trong trạng thái dừng chờ ở một số pha, làm giảm tốc độ tổng thể dù hàng đợi thực tế thấp hơn. Đây là điểm cần cải thiện trong các phiên bản tiếp theo.
+
+    \item \textbf{Phạm vi thực nghiệm:} Thực nghiệm chỉ được thực hiện trên 1 ngã tư đơn với lưu lượng giao thông được mô phỏng theo xác suất cố định. Kết quả có thể thay đổi khi áp dụng cho các kịch bản phức tạp hơn (giờ cao điểm, mạng lưới nhiều nút).
+
+    \item \textbf{Thời gian huấn luyện:} Quá trình huấn luyện 200.000 bước đòi hỏi khoảng 30--60 phút tùy cấu hình máy tính, chưa phù hợp cho triển khai online thời gian thực.
+
+    \item \textbf{Chưa triển khai thực tế:} Kết quả hiện tại chỉ được kiểm chứng trong môi trường mô phỏng SUMO; cần thêm bước xác thực trên dữ liệu giao thông thực trước khi có thể triển khai tại các nút giao thực tế.
+\end{itemize}

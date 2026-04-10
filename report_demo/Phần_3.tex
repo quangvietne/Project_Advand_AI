@@ -1,0 +1,295 @@
+\section{Chương II: Thiết kế hệ thống, thuật toán và dữ liệu}
+\subsection{Tiền xử lý dữ liệu}
+\subsubsection{Tổng quan dữ liệu}
+Bộ dữ liệu Breast Cancer Wisconsin (Diagnostic Dataset) là một bộ dữ liệu phổ biến được sử dụng trong các bài toán phân loại ung thư. Nó được công bố lần đầu tiên bởi Dr. William H. Wolberg tại University of Wisconsin, và hiện tại thường xuyên được sử dụng để nghiên cứu và thực hành trong lĩnh vực học máy (machine learning) và phân tích dữ liệu y tế.
+\\ Các đặc điểm được tính toán từ hình ảnh số hóa của một mẫu chọc hút bằng kim nhỏ (FNA) của khối u vú. Chúng mô tả các đặc điểm của nhân tế bào có trong hình ảnh.
+\\ Bộ dữ liệu chứa 569 mẫu thử nghiệm, bao gồm 357 mẫu lành tính và 212 mẫu ung thư vú ác tính. 
+\\ Các thuộc tính trong bộ dữ liệu: 
+\begin{itemize}
+    \item 1. Số ID
+    \item 2. Chẩn đoán (M = ác tính, B = lành tính)
+    \item 3-32)
+    Mười đặc điểm có giá trị thực được tính toán cho mỗi nhân tế bào:
+    \begin{itemize}
+    \item a) bán kính (trung bình khoảng cách từ tâm đến các điểm trên chu vi)
+    \item b) kết cấu (độ lệch chuẩn của các giá trị thang độ xám)
+    \item c) chu vi
+    \item d) diện tích
+    \item e) độ mịn (biến thiên cục bộ trong độ dài bán kính)
+    \item f) độ chặt \((chu vi^2 / diện tích - 1,0)\)
+    \item g) độ lõm (mức độ nghiêm trọng của các phần lõm của đường đồng mức)
+    \item h) các điểm lõm (số phần lõm của đường đồng mức)
+    \item i) tính đối xứng
+    \item j) chiều fractal ("xấp xỉ đường bờ biển" - 1)
+    \item Giá trị trung bình, lỗi chuẩn và "tệ nhất" hoặc lớn nhất (giá trị trung bình của ba giá trị lớn nhất) của các đặc điểm này được tính toán cho mỗi hình ảnh, tạo ra 30 đặc điểm. Ví dụ, trường 3 là Bán kính trung bình, trường 13 là Bán kính SE, trường 23 là Bán kính tệ nhất.
+\end{itemize}
+\end{itemize}
+Tất cả các thuộc tính được mã hóa lại bằng bốn chữ số có nghĩa.
+Giá trị thuộc tính bị thiếu: không có
+\\ Nhãn phân loại đại diện cho loại ung thư vú. Do đó, tập dữ liệu mẫu chứa tổng cộng 30 đặc điểm và một đặc điểm nhãn mẫu (ác tính và lành tính).
+\subsubsection{Chuẩn hóa dữ liệu}
+Dữ liệu chẩn đoán ung thư vú chứa nhiều đặc trưng (như radius-mean, texture-mean, area-mean,...) với đơn vị đo lường và phạm vi giá trị khác nhau. Điều này có thể gây ảnh hưởng xấu đến hiệu suất của các thuật toán học máy, đặc biệt là các thuật toán dựa trên khoảng cách hoặc độ lớn giá trị (ví dụ: KNN, Logistic Regression). Trong báo cáo này, theo đặc điểm của bộ dữ liệu ung thư vú WDBC, tiêu chuẩn hóa điểm Z đã được chọn để xử lý dữ liệu. Dữ liệu được xử lý theo tiêu chuẩn hóa điểm Z tuân theo phân phối chuẩn chuẩn, nghĩa là giá trị trung bình là 0 và phương sai là 1. \\Công thức chuẩn hóa điểm Z như sau: $x^* = \frac{x - \text{mean}}{\text{std}}$ trong đó giá trị trung bình là giá trị trung bình của dữ liệu đặc tính mẫu và std là độ lệch chuẩn của dữ liệu đặc tính mẫu. 
+\\ Việc chuẩn hóa dữ liệu bằng \texttt{StandardScaler} mang lại các lợi ích sau:
+\begin{itemize}
+    \item {Cân bằng giá trị của các đặc trưng:} Sau khi chuẩn hóa, các đặc trưng có trung bình $0$ và độ lệch chuẩn $1$, giúp mô hình hoạt động ổn định hơn.
+    \item {Cải thiện hiệu suất của các thuật toán học máy:} Các thuật toán dựa trên khoảng cách (ví dụ: KNN, SVM) hoặc tối ưu hóa gradient (như Logistic Regression) trở nên hiệu quả hơn khi dữ liệu đã được chuẩn hóa.
+    \item {Đảm bảo vai trò công bằng giữa các đặc trưng:} Đặc trưng có phạm vi giá trị lớn sẽ không áp đảo đặc trưng có giá trị nhỏ hơn.
+    \item {Tăng tốc độ hội tụ:} Trong các mô hình dựa trên tối ưu hóa gradient, việc chuẩn hóa giúp gradient được tính toán chính xác hơn, từ đó tăng tốc độ hội tụ của thuật toán.
+\end{itemize}
+% \\Kết quả chuẩn hóa dữ liệu được thể hiện trong Bảng 1.
+% \\Table 1. Kết quả chuẩn hóa dữ liệu.
+% \begin{table}[h!]
+% \centering
+% \begin{tabular}{|c|c|c|c|c|c|}
+% \hline
+% \textbf{Radius\_mean} & \textbf{Area\_mean} & \textbf{Radius\_se} & $\cdots$ & \textbf{Area\_se} & \textbf{Radius\_worst} \\ \hline
+% 1.0971 & 0.9844 & 2.4897 & $\cdots$ & 2.4876 & 1.8867 \\ \hline
+% 1.8298 & 1.9087 & 0.4993 & $\cdots$ & 0.7424 & 1.8059 \\ \hline
+% 1.5799 & 1.5589 & 1.2287 & $\cdots$ & 1.1813 & 1.5112 \\ \hline
+% -0.7689 & -0.7645 & 0.3264 & $\cdots$ & -0.2883 & -0.2815 \\ \hline
+% 1.7503 & 1.8262 & 1.2705 & $\cdots$ & 1.1904 & 1.2986 \\ \hline
+% \end{tabular}
+% \label{table:sample_data}
+% \end{table}
+
+ 
+
+\subsection{Mô hình dự đoán dựa trên thuật toán Naïve Bayes}
+\subsubsection{Ý tưởng thuật toán }
+Naïve Bayes là một thuật toán học máy phân loại dựa trên Định lý Bayes. \\
+
+Định lý Bayes được biểu diễn dưới dạng công thức như sau: \\
+\[P(C|X) = \frac{P(X|C) \cdot P(C)}{P(X)}\] \\
+
+Trong đó:
+\begin{itemize}
+    \item \(P(C|X)\): Xác suất hậu nghiệm (\textit{posterior probability}) – xác suất để \(X\) thuộc lớp \(C\).
+    \item \(P(X|C)\): Xác suất có điều kiện (\textit{likelihood}) – xác suất để \(X\) xảy ra khi biết lớp \(C\).
+    \item \(P(C)\): Xác suất tiên nghiệm (\textit{prior probability}) – xác suất xảy ra của lớp \(C\).
+    \item \(P(X)\): Xác suất xảy ra của \(X\) – đóng vai trò là hằng số trong bài toán phân loại.
+\end{itemize}
+
+\subsubsection{Giả định "Naïve"}
+Ta gọi định lí này là "Naïve" (ngây thơ) vì  nó giả định rằng các yếu tố dự báo trong mô hình Naïve Bayes là độc lập có điều kiện hoặc không liên quan đến bất kỳ đặc trưng nào khác trong mô hình. Nó cũng giả định rằng tất cả các đặc trưng đều đóng góp như nhau vào kết quả. Mặc dù các giả định này thường bị vi phạm trong các tình huống thực tế (ví dụ: một từ tiếp theo trong email phụ thuộc vào từ trước đó), nhưng nó đơn giản hóa vấn đề phân loại bằng cách làm cho nó dễ tính toán hơn. Nghĩa là, bây giờ chỉ cần một xác suất duy nhất cho mỗi biến, điều này giúp cho việc tính toán mô hình dễ dàng hơn. Bất chấp giả định độc lập không thực tế này, thuật toán phân loại hoạt động tốt, đặc biệt là với kích thước mẫu nhỏ. \\
+Nhờ giả định này, xác suất \(P(X|C)\) có thể được tính như sau:\
+\[P(X|C) = P(X_1|C) \cdot P(X_2|C) \cdot \ldots \cdot P(X_n|C)\]
+\subsubsection{Thuật toán Naïve Bayes}
+\begin{itemize}
+     
+
+\item Xét các bài toán phân lớp với \( C \) class khác nhau. Thay vì tìm ra chính xác label của mỗi điểm dữ liệu \( x \in \mathbb{R}^d \), ta có thể đi tìm xác suất để đầu ra đó rơi vào mỗi class: \( p(y = c | x) \), hoặc viết gọn thành \( p(c|x) \). \\
+
+\item Cách thuật toán hoạt động :
+\begin{enumerate}
+    \item Tính toán xác suất:
+    Sử dụng công thức định lý Bayes, xác suất của một nhãn C được tính như sau:
+    \[P(c|x) = \frac{P(c).P(x|c)}{P(x)}\]
+    \item Ta cần tính : 
+    \[c = \arg\max_{c \in \{1, \ldots, C\}} p(c|x) \tag{1}\]
+    Biểu thức trong dấu argmax ở (1) nhìn chung khó có cách tính trực tiếp. Thay vào đó, quy tắc Bayes thường được sử dụng:
+\[c = \arg\max_{c} p(c|x) = \arg\max_{c} \frac{p(x|c) p(c)}{p(x)} \propto \arg\max_{c} p(x|c)p(c)
+\]
+    \item Ước lượng xác suất có điều kiện $P(x|c)$:
+     Với giả định độc lập của Naive Bayes:
+    \[p(x|c) = p(x_1, x_2, \ldots, x_d|c) = \prod_{i=1}^d p(x_i|c) \]
+    \item Lựa chọn nhãn:
+    Nhãn được dự đoán là nhãn C có xác suất $P(c|x)$  lớn nhất.
+\end{enumerate}
+
+\item Ở bước huấn luyện, các phân phối \( p(c) \) và \( p(x_i|c), i = 1, \ldots, d \) sẽ được xác định dựa vào dữ liệu huấn luyện. Việc xác định các giá trị này có thể dựa vào MLE hoặc MAP.\\
+\item Việc tính toán \( p(x_i|c) \) phụ thuộc vào loại dữ liệu. Có ba loại phân bố xác suất thường được dùng: 
+\textit{Gaussian Naive Bayes}, \textit{Multinomial Naive Bayes}, và \textit{Bernoulli Naive Bayes}.
+\end{itemize}
+\subsubsection{Ước lượng tham số MLE} 
+Trong bài toán phát hiện ung thư lành tính và ác tính , ta sử dụng mô hình \textit{Gaussian Naive Bayes} . Nên MLE ( ước lượng tham số cực đại ) được tính như sau : 
+\begin{enumerate}
+    \item  hàm phân phối chuẩn $N(0 , 1)$ 
+    \[
+f(x \mid \mu, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right)
+\]
+    \item Likelihood Function : 
+    \[
+L(\mu, \sigma^2) = \prod_{i=1}^n \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left( -\frac{(x_i - \mu)^2}{2\sigma^2} \right)
+\]
+    \item Log-Likelihood Function : 
+    \[
+\ell(\mu, \sigma^2) = \log L(\mu, \sigma^2) = \sum_{i=1}^n \log\left( \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left( -\frac{(x_i - \mu)^2}{2\sigma^2} \right) \right)
+\]
+    \[
+\ell(\mu, \sigma^2) = \sum_{i=1}^n \left[ \log\left( \frac{1}{\sqrt{2\pi\sigma^2}} \right) - \frac{(x_i - \mu)^2}{2\sigma^2} \right]
+\]
+    \[
+\ell(\mu, \sigma^2) = \sum_{i=1}^n \left[ -\frac{1}{2} \log(2\pi) - \frac{1}{2} \log(\sigma^2) - \frac{(x_i - \mu)^2}{2\sigma^2} \right]
+\]
+
+\[
+\ell(\mu, \sigma^2) = -\frac{n}{2} \log(2\pi) - \frac{n}{2} \log(\sigma^2) - \frac{1}{2\sigma^2} \sum_{i=1}^n (x_i - \mu)^2
+\]
+    \item Maximizing the Log-Likelihood : \\
+    Đạo hàm của \(\ell(\mu, \sigma^2)\) với \(\mu\) là:
+\[
+\frac{\partial \ell(\mu, \sigma^2)}{\partial \mu} = -\frac{1}{\sigma^2} \sum_{i=1}^n (x_i - \mu)
+\]
+
+Cho \(\frac{\partial \ell(\mu, \sigma^2)}{\partial \mu} = 0\), ta có:
+\[
+\sum_{i=1}^n (x_i - \mu) = 0
+\]
+
+Từ đó ta có : 
+\[
+\mu = \frac{1}{n} \sum_{i=1}^n x_i
+\]
+    Đạo hàm của \(\ell(\mu, \sigma^2)\) với \(\sigma^2\) là:
+\[
+\frac{\partial \ell(\mu, \sigma^2)}{\partial \sigma^2} = -\frac{n}{2\sigma^2} + \frac{1}{2(\sigma^2)^2} \sum_{i=1}^n (x_i - \mu)^2
+\]
+    Cho \(\frac{\partial \ell(\mu, \sigma^2)}{\partial \sigma^2} = 0\), ta có:
+\[
+-\frac{n}{2\sigma^2} + \frac{1}{2(\sigma^2)^2} \sum_{i=1}^n (x_i - \mu)^2 = 0
+\]
+
+Nhân với \(2(\sigma^2)^2\):
+\[
+-n\sigma^2 + \sum_{i=1}^n (x_i - \mu)^2 = 0
+\]
+
+Từ đó , ta có \(\sigma^2\):
+\[
+\sigma^2 = \frac{1}{n} \sum_{i=1}^n (x_i - \mu)^2
+\]
+    \item Kết luận \\
+    Ước lượng tham số MLE cho các tham số của phân phối chuẩn Gaussion là \\ 
+    \[
+    \mu = \frac{1}{n} \sum_{i=1}^n x_i
+    \]
+     \\
+    \[
+    \sigma^2 = \frac{1}{n} \sum_{i=1}^n (x_i - \mu)^2
+    \]
+\subsubsection{Điểm mạnh và hạn chế}
+Điểm mạnh : 
+\begin{itemize}
+    \item Ít phức tạp hơn : So với các bộ phân loại khác, Naïve Bayes được coi là bộ phân loại đơn giản hơn vì các tham số dễ ước tính hơn. Do đó, đây là một trong những thuật toán đầu tiên được học trong các khóa học về khoa học dữ liệu và học máy.
+    \item Có khả năng mở rộng tốt : So với hồi quy logistic, Naïve Bayes được coi là một bộ phân loại nhanh và hiệu quả, khá chính xác khi giả định độc lập có điều kiện được giữ nguyên. Nó cũng có yêu cầu lưu trữ thấp
+    \item Có thể xử lý dữ liệu có nhiều chiều : Các trường hợp sử dụng, chẳng hạn như phân loại tài liệu, có thể có số lượng chiều cao, gây khó khăn cho các bộ phân loại khác trong việc quản lý.
+\end{itemize}
+Hạn chế : 
+\begin{itemize}
+    \item Giả định cốt lõi không thực tế : Mặc dù giả định độc lập có điều kiện nhìn chung có hiệu quả, nhưng giả định này không phải lúc nào cũng đúng, dẫn đến phân loại không chính xác.
+\end{itemize}
+\subsection{Mô hình dự đoán dựa trên thuật toán Random Forest}
+\subsubsection{Khái niệm Decision trees}
+Vì mô hình rừng ngẫu nhiên được tạo thành từ nhiều decision trees, nên sẽ hữu ích khi bắt đầu bằng cách mô tả ngắn gọn thuật toán decision trees.
+\\Cây quyết định (Decision Tree) là một cây phân cấp có cấu trúc được dùng để phân lớp các đối tượng dựa vào dãy các luật. Nó cho dữ liệu về các đối tượng gồm các thuộc
+tính cùng với lớp (classes) của nó, cây quyết định sẽ sinh ra các luật để dự đoán lớp của các dữ liệu chưa biết. 
+\subsubsection{Vai trò của Decision trees}
+Mô hình cây quyết định là một phương pháp đơn giản có thể được sử dụng để phân loại các đối tượng theo các tính năng của chúng.
+\\Ví dụ: Bạn có thể có một cây quyết định bạn có ra ngoài đi chơi hay không dựa trên các thuộc tính sau: thời tiết, độ ẩm và gió hoặc bạn có thể có một cây quyết định cho bạn biết đối tượng của bạn có phải là một quả táo hay không dựa trên các thuộc tính sau: màu sắc, kích thước và trọng lượng.
+\\Một cây quyết định hoạt động bằng cách đi xuống từ nút gốc cho đến khi nó đạt đến nút quyết định. Các nút quyết định có các nhánh đưa chúng ta đến các nút lá hoặc nhiều nút quyết định hơn. Các nút lá là các nút đầu cuối trình bày quyết định cuối cùng giống như tên của chúng cho thấy. 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{image/decisiontrees.png}
+\end{figure}
+\subsubsection{Phương pháp Ensemble}
+Random Forest là một phần mở rộng của phương pháp bagging nên chúng ta sẽ tìm hiểu thêm về phương pháp Ensemble và bagging.
+\\Các phương pháp Ensemble được tạo thành từ một tập hợp các bộ phân loại(ví dụ: decision trees)và các dự đoán của chúng được tổng hợp để xác định kết quả phổ biến nhất. Các phương pháp Ensemble nổi tiếng nhất là bagging, còn được gọi là tổng hợp bootstrap và boosting.Trong phương pháp này, một mẫu dữ liệu ngẫu nhiên trong tập huấn luyện được chọn có thể được chọn nhiều lần. Sau khi một số mẫu dữ liệu được tạo, các mô hình này sẽ được train độc lập và tùy thuộc vào loại chức năng(tức là hồi quy hoặc phân loại) phần lớn các dự đoán đó mang lại ước tính chính xác hơn. Cách tiếp cận này thường được sử dụng để giảm phương sai trong tập dữ liệu nhiễu.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{image/bagging.png}
+\end{figure}
+\subsubsection{Thuật toán Random Forest}
+Thuật toán Random Forest sử dụng cả tính chất bagging và tính ngẫu nhiên đặc trưng để tạo ra một rừng decision trees không tương quan. Tính ngẫu nhiên của tính năng, còn được gọi là tính năng bagging hoặc "phương pháp không gian con ngẫu nhiên" , tạo ra một tập hợp con các tính năng ngẫu nhiên, đảm bảo mối tương quan thấp giữa các decision trees. Đây là điểm khác biệt chính giữa decisoin trees và random forest. Trong khi decisoin trees xem xét tất cả các phân chia đặc điểm có thể có thì các random forest chỉ chọn một tập hợp con của các đặc điểm đó. 
+\\Nếu chúng ta quay lại câu hỏi "tôi có nên lướt web không?" Ví dụ: những câu hỏi mà tôi có thể hỏi để xác định dự đoán có thể không toàn diện như bộ câu hỏi của người khác. Bằng cách tính đến tất cả những biến đổi tiềm ẩn trong dữ liệu, chúng tôi có thể giảm nguy cơ khớp quá mức, sai lệch và phương sai tổng thể, dẫn đến dự đoán chính xác hơn.
+\subsubsection{Random Forest hoạt động như thế nào?}
+Random Forest có ba tham số chính cần được đặt trước khi đào tạo. Chúng bao gồm kích thước nút, số lượng cây và số lượng đối tượng được lấy mẫu. Từ đó, random forest classifier có thể được sử dụng để giải quyết các vấn đề hồi quy hoặc phân loại. Random forest được tạo thành từ một tập hợp các decison trees và mỗi cây trong quần thể bao gồm một mẫu dữ liệu được lấy từ tập huấn luyện có thay thế, được gọi là mẫu bootstrap. Trong mẫu đào tạo đó, một phần ba trong số đó được dùng làm test data, được gọi là out-of-bag (oob). Sau đó, một trường hợp ngẫu nhiên khác được đưa vào thông qua tính năng bagging, tăng thêm tính đa dạng cho tập dữ liệu và giảm mối tương quan giữa các decison trees. Tùy thuộc vào loại vấn đề, việc xác định dự đoán sẽ khác nhau. Đối với hồi quy, các decision trees riêng lẻ sẽ được tính trung bình và đối với phân loại, phiếu bầu đa số sẽ đưa ra kết quả được dự đoán. Cuối cùng, mẫu oob sau đó được sử dụng để xác thực chéo, hoàn thiện dự đoán đó.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{image/randomforest.png}
+\end{figure}
+\subsubsection{Điểm mạnh và Hạn chế}
+Điểm mạnh : 
+\begin{itemize}
+    \item {Giảm nguy cơ over fitting:} Cây quyết định có nguy cơ quá khớp vì chúng có xu hướng khớp chặt tất cả các mẫu trong dữ liệu đào tạo. Tuy nhiên, khi có một số lượng lớn cây quyết định trong một khu rừng ngẫu nhiên, bộ phân loại sẽ không khớp quá mức mô hình vì việc tính trung bình các cây không tương quan làm giảm phương sai tổng thể và lỗi dự đoán.
+    \item {Tăng tính linh hoạt:} Vì random forest có thể xử lý cả nhiệm vụ hồi quy và phân loại với độ chính xác cao nên đây là phương pháp phổ biến trong số các nhà khoa học dữ liệu. Feature bagging cũng làm cho trình phân loại random forest trở thành một công cụ hiệu quả để ước tính các giá trị bị thiếu vì nó duy trì độ chính xác khi một phần dữ liệu bị thiếu.
+    \item {Dễ dàng phân loại độ quan trọng của đặc trưng:} Rừng ngẫu nhiên giúp dễ dàng đánh giá tầm quan trọng của biến hoặc đóng góp của biến vào mô hình. Có một số cách để đánh giá tầm quan trọng của tính năng. Tầm quan trọng của Gini và độ giảm tạp chất trung bình (MDI) thường được sử dụng để đo mức độ chính xác của mô hình giảm khi một biến nhất định bị loại trừ. Tuy nhiên, tầm quan trọng của hoán vị, còn được gọi là độ chính xác giảm trung bình (MDA), là một biện pháp quan trọng khác. MDA xác định mức giảm độ chính xác trung bình bằng cách hoán vị ngẫu nhiên các giá trị tính năng trong các mẫu oob.
+\end{itemize}
+Hạn chế
+\begin{itemize}
+    \item {Quy trình tốn thời gian:} Vì thuật toán rừng ngẫu nhiên có thể xử lý các tập dữ liệu lớn nên chúng có thể cung cấp các dự đoán chính xác hơn, nhưng có thể xử lý dữ liệu chậm vì chúng phải tính toán dữ liệu cho từng cây quyết định riêng lẻ.
+    \item {Yêu cầu nhiều tài nguyên hơn:} Vì rừng ngẫu nhiên xử lý các tập dữ liệu lớn hơn nên chúng sẽ yêu cầu nhiều tài nguyên hơn để lưu trữ dữ liệu đó.
+    \item {Phức tạp hơn:} Việc dự đoán một cây quyết định đơn lẻ dễ diễn giải hơn so với một rừng cây quyết định.
+\end{itemize}
+\subsection{Mô hình dự đoán dựa trên thuật toán Logistic Regression}
+\subsubsection{Khái niệm Logistic Regression}
+Logistic Regression là một mô hình học máy được sử dụng để dự đoán xác suất của một sự kiện, thường là một biến phân loại (binary classification). Mặc dù tên gọi có "regression" (hồi quy) trong đó, nhưng Logistic Regression chủ yếu được dùng cho bài toán phân loại chứ không phải hồi quy liên tục
+\subsubsection{Thuật toán Logistic Regression}
+\begin{itemize}
+    \item Phương trình Logistic Regression : 
+    \[
+P(Y = 1 \mid X) = \frac{1}{1 + \exp\left(w_0 + \sum_i w_i X_i\right)} = \frac{1}{1 + e^{-z}}
+\]
+    Trong đó 
+    \item \(P(Y = 1 \mid X)\): Xác suất sự kiện \(Y = 1\) xảy ra với điều kiện đầu vào \(X = (X_1, X_2, \ldots, X_n)\).
+    \item \(w_0\): Hệ số chặn (intercept).
+    \item \(w_i\): Trọng số (weight) của biến \(X_i\).
+    \item \(X_i\): Giá trị của biến đầu vào thứ \(i\).
+    \item \(\exp\): Hàm mũ (exponential function).
+    \item Nếu \(P(Y = 1 \mid X) > 0.5\), ta phân loại \(Y = 1\) (sự kiện xảy ra).
+    \item Nếu \(P(Y = 1 \mid X) \leq 0.5\), ta phân loại \(Y = 0\) (sự kiện không xảy ra).
+\end{itemize}
+\subsubsection{Xây dựng và tối đa hóa hàm mất mát}
+Với các mô hình LR, ta có thể giả sử rằng xác suất để một điểm dữ liệu \(x\) rơi vào lớp thứ nhất là \(f(\mathbf{w}^\top \mathbf{x})\) và rơi vào lớp còn lại là \(1 - f(\mathbf{w}^\top \mathbf{x})\):
+\[
+p(y_i = 1 \mid \mathbf{x}_i; \mathbf{w}) = f(\mathbf{w}^\top \mathbf{x}_i) \quad \text{(14.4)}
+\]
+\[
+p(y_i = 0 \mid \mathbf{x}_i; \mathbf{w}) = 1 - f(\mathbf{w}^\top \mathbf{x}_i) \quad \text{(14.5)}
+\]
+Trong đó \(p(y_i = 1 \mid \mathbf{x}_i; \mathbf{w})\) được hiểu là xác suất xảy ra sự kiện đầu ra \(y_i = 1\) khi biết tham số mô hình \(\mathbf{w}\) và dữ liệu đầu vào \(\mathbf{x}_i\). \\
+Ta cần giải bài toán tối ưu:
+\[
+\mathbf{w} = \underset{\mathbf{w}}{\arg\max} \ p(\mathbf{y} \mid \mathbf{X}; \mathbf{w}) \quad \text{(14.7)}
+\] \\
+
+Nguyên lý MLE, tính sự hợp lý (likelihood)
+\[L(w, w_0) = P(D) = \prod_{i=1}^n P(y_i|x_i) = \prod_{i=1}^n \mu_i^{y_i} (1-\mu_i)^{1-y_i}\]\\
+Lấy negative-loglikelihood (NLL)
+\[\ell(w, w_0) = -\log L(w, w_0) = \sum_{i=1}^n -y_i\log\mu_i - (1-y_i)\log(1-\mu_i)\]
+Xuống đồi bằng đạo hàm (gradient descent)\\
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{image/images.png}
+    \caption{Xuống đồi bằng đạo hàm}
+    \label{fig:enter-label}
+\end{figure}
+\\
+Tính đạo hàm, đi ngược hướng đạo hàm, với $\lambda > 0$ \\
+\[\begin{align*}
+w&\leftarrow w-\lambda \nabla_w \ell(w, w_0)\\
+w_0&\leftarrow w_0-\lambda \nabla_{w_0} \ell(w, w_0)
+\end{align*}\]
+Đạo hàm  \\
+\[\mu_i = \sigma(w^Tx_i + w_0\cdot 1)\]
+\[\sigma'(z) = \sigma(z) (1-\sigma(z))\]
+\[\begin{align*}
+\nabla_w \ell(w, w_0) &= \sum_{i=1}^n \frac {\partial \ell}{\partial\mu_i}\frac {\partial\mu_i}{\partial w}\\
+&=\sum_{i=1}^n \left(-\frac {y_i}{\mu_i}+\frac {1-y_i}{1-\mu_i}\right)\mu_i(1-\mu_i)x_i\\
+&=\sum_{i=1}^n (-y_i(1-\mu_i)+(1-y_i)\mu_i)x_i\\
+&=\sum_{i=1}^n (\mu_i - y_i)x_i\\
+\nabla_{w_0} \ell(w, w_0) &= \sum_{i=1}^n (\mu_i - y_i)
+\end{align*}\]
+Nếu $y_i=0$ thì mình muốn $\mu_i = 0$
+
+Nếu $y_i=1$ thì mình muốn $\mu_i = 1$
+\subsubsection{Điểm mạnh và hạn chế} 
+Điểm mạnh : 
+\begin{itemize}
+    \item Độ chính xác tốt cho nhiều tập dữ liệu đơn giản và hoạt động tốt khi dữ liệu có thể phân tách tuyến tính.
+    \item Nó không chỉ cung cấp thước đo độ phù hợp của một yếu tố dự báo (kích thước hệ số) mà còn cung cấp hướng kết nối của yếu tố đó (tích cực hay tiêu cực)
+\end{itemize}
+Hạn chế : 
+\begin{itemize}
+    \item Nếu số lượng sát thương ít hơn số lượng tính năng thì không nên sử dụng Hồi quy logistic, nếu không có thể dẫn đến tình trạng quá trùng khớp
+    \item Nó chỉ có thể được sử dụng để mong đợi các chức năng rời rạc. Do đó, các biến phụ thuộc của Hồi quy Logistic bị buộc phải bỏ đi.
+\end{itemize}

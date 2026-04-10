@@ -20,6 +20,8 @@ class Transition:
 class ReplayBuffer:
     def __init__(self, capacity: int, state_shape: Tuple[int, ...]):
         self.capacity = capacity
+        # state_shape is stored for reference; the buffer uses a plain Python list
+        # and relies on numpy stacking at sample time rather than pre-allocated arrays.
         self.state_shape = state_shape
         self.storage: List[Transition] = []
         self.idx = 0

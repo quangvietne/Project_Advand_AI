@@ -1,0 +1,230 @@
+\section{Chương II: Cơ sở lý thuyết}
+
+\subsection{Mô hình Quyết định Markov (MDP)}
+
+\subsubsection{Định nghĩa và thành phần}
+
+Mô hình Quyết định Markov (Markov Decision Process --- MDP) là một khung toán học được sử dụng để mô hình hóa các bài toán ra quyết định tuần tự trong môi trường có tính ngẫu nhiên. MDP cung cấp nền tảng lý thuyết cho Học tăng cường (Reinforcement Learning), cho phép một tác nhân (agent) học cách tối ưu hóa hành vi của mình thông qua tương tác với môi trường.
+
+Một MDP được định nghĩa bởi bộ 4 thành phần $\mathcal{M} = (S, A, P, R)$, trong đó:
+
+\begin{itemize}
+    \item $S$: \textbf{Không gian trạng thái} (State Space) --- tập hợp tất cả các trạng thái có thể có của môi trường. Tại mỗi thời điểm $t$, môi trường ở một trạng thái $s_t \in S$.
+
+    \item $A$: \textbf{Không gian hành động} (Action Space) --- tập hợp tất cả các hành động mà agent có thể thực hiện. Agent chọn hành động $a_t \in A$ tại mỗi bước.
+
+    \item $P(s' | s, a)$: \textbf{Hàm chuyển trạng thái} (Transition Function) --- xác suất chuyển từ trạng thái $s$ sang trạng thái $s'$ sau khi thực hiện hành động $a$:
+    \[
+    P(s' | s, a) = \Pr(s_{t+1} = s' \mid s_t = s,\ a_t = a)
+    \]
+
+    \item $R(s, a)$: \textbf{Hàm phần thưởng} (Reward Function) --- giá trị số thực đánh giá mức độ hiệu quả của hành động $a$ tại trạng thái $s$. Phần thưởng tức thì $r_t = R(s_t, a_t)$ cung cấp tín hiệu học tập cho agent.
+\end{itemize}
+
+\subsubsection{Tính chất Markov}
+
+Đặc trưng cốt lõi của MDP là \textbf{tính chất Markov}: trạng thái tương lai chỉ phụ thuộc vào trạng thái hiện tại và hành động hiện tại, không phụ thuộc vào lịch sử các trạng thái trước đó:
+\[
+P(s_{t+1} \mid s_t, a_t) = P(s_{t+1} \mid s_0, a_0, s_1, a_1, \ldots, s_t, a_t)
+\]
+
+Tính chất này cho phép đơn giản hóa đáng kể việc biểu diễn và giải quyết bài toán, vì agent chỉ cần quan sát trạng thái hiện tại để đưa ra quyết định tối ưu mà không cần ghi nhớ toàn bộ lịch sử.
+
+\subsubsection{Chính sách và mục tiêu tối ưu}
+
+Một \textbf{chính sách} (policy) $\pi: S \to A$ là ánh xạ từ trạng thái sang hành động, xác định cách agent hành xử trong mọi tình huống. Mục tiêu của MDP là tìm ra chính sách tối ưu $\pi^*$ sao cho tối đa hóa \textbf{phần thưởng tích lũy chiết khấu kỳ vọng}:
+\[
+\pi^* = \arg\max_\pi\ \mathbb{E}_\pi\left[\sum_{t=0}^{\infty} \gamma^t R(s_t, a_t)\right]
+\]
+
+trong đó $\gamma \in (0, 1]$ là \textbf{hệ số chiết khấu} (discount factor). Giá trị $\gamma$ nhỏ khiến agent ưu tiên phần thưởng ngắn hạn, trong khi $\gamma$ gần 1 khuyến khích agent tối ưu hóa dài hạn. Trong dự án này, $\gamma = 0.99$, phản ánh tầm quan trọng của việc giảm ùn tắc bền vững trong suốt cả giờ mô phỏng.
+
+\subsubsection{Tại sao điều khiển đèn giao thông là một MDP?}
+
+Bài toán điều khiển đèn giao thông hội tụ đầy đủ các đặc trưng của MDP:
+\begin{enumerate}
+    \item \textbf{Quyết định tuần tự:} Hành động chọn pha đèn tại bước $t$ ảnh hưởng trực tiếp đến trạng thái giao thông tại $t+1$.
+    \item \textbf{Tính ngẫu nhiên:} Phương tiện đến ngẫu nhiên, không thể dự đoán chính xác trạng thái tiếp theo.
+    \item \textbf{Tối ưu dài hạn:} Mục tiêu không chỉ là giảm ùn tắc ngay lập tức mà cả trong tương lai.
+    \item \textbf{Không biết trước mô hình:} Hàm chuyển trạng thái $P(s'|s,a)$ không được biết tường minh, cần học từ dữ liệu.
+\end{enumerate}
+
+\subsection{Học tăng cường (Reinforcement Learning)}
+
+\subsubsection{Khái niệm và đặc điểm}
+
+\textbf{Học tăng cường} (Reinforcement Learning --- RL) là một nhánh của học máy, trong đó một agent học cách ra quyết định tối ưu thông qua quá trình tương tác thử-sai (trial-and-error) với môi trường. Không giống như Học có giám sát (Supervised Learning), RL không yêu cầu dữ liệu được gán nhãn trước; thay vào đó, agent nhận tín hiệu phản hồi dưới dạng phần thưởng từ môi trường.
+
+Những đặc điểm nổi bật của RL:
+\begin{itemize}
+    \item Không có nhãn đúng--sai tường minh như Học có giám sát.
+    \item Phần thưởng có thể bị trễ theo thời gian (delayed reward) --- hành động hiện tại có thể chỉ được đánh giá sau nhiều bước.
+    \item Mục tiêu là tối ưu hóa hiệu quả dài hạn, không chỉ phần thưởng tức thì.
+    \item Phù hợp với các bài toán điều khiển và ra quyết định trong môi trường động.
+\end{itemize}
+
+\subsubsection{Khung tương tác Agent--Môi trường}
+
+Khung RL chuẩn bao gồm các thành phần:
+\begin{itemize}
+    \item \textbf{Agent}: Tác nhân ra quyết định, tương ứng với hệ thống điều khiển đèn.
+    \item \textbf{Environment}: Môi trường tương tác, tương ứng với nút giao thông và luồng xe.
+    \item \textbf{State} ($s_t$): Trạng thái quan sát được của môi trường tại thời điểm $t$.
+    \item \textbf{Action} ($a_t$): Hành động agent thực hiện (chọn pha đèn).
+    \item \textbf{Reward} ($r_t$): Phản hồi từ môi trường sau mỗi hành động.
+\end{itemize}
+
+Tại mỗi bước thời gian $t$, vòng lặp tương tác diễn ra như sau:
+\begin{enumerate}
+    \item Agent quan sát trạng thái hiện tại $s_t$.
+    \item Agent chọn hành động $a_t$ theo chính sách $\pi$.
+    \item Môi trường chuyển sang trạng thái $s_{t+1}$ và trả về phần thưởng $r_{t+1}$.
+    \item Agent cập nhật kiến thức và lặp lại.
+\end{enumerate}
+
+\subsubsection{Mục tiêu học tập}
+
+Agent cần học chính sách $\pi$ để tối đa hóa tổng phần thưởng tích lũy chiết khấu từ bước $t$:
+\[
+G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1}
+\]
+
+Đây chính là \textbf{return} (lợi tức), thể hiện giá trị lâu dài của việc theo một chính sách nhất định từ trạng thái $s_t$.
+
+\subsection{Q-Learning và Hàm giá trị hành động}
+
+\subsubsection{Hàm giá trị hành động Q}
+
+\textbf{Hàm giá trị hành động} $Q^\pi(s, a)$ biểu thị tổng phần thưởng kỳ vọng khi thực hiện hành động $a$ tại trạng thái $s$ và sau đó tuân theo chính sách $\pi$:
+\[
+Q^\pi(s, a) = \mathbb{E}_\pi\left[G_t \mid s_t = s,\ a_t = a\right]
+\]
+
+Hàm Q tối ưu $Q^*(s, a)$ thỏa mãn \textbf{phương trình Bellman tối ưu}:
+\[
+Q^*(s, a) = \mathbb{E}\left[r + \gamma \max_{a'} Q^*(s', a') \mid s, a\right]
+\]
+
+Từ $Q^*$, chính sách tối ưu được xác định đơn giản bằng:
+\[
+\pi^*(s) = \arg\max_a Q^*(s, a)
+\]
+
+\subsubsection{Q-Learning truyền thống và hạn chế}
+
+Q-Learning cập nhật bảng Q theo quy tắc:
+\[
+Q(s, a) \leftarrow Q(s, a) + \alpha \left[r + \gamma \max_{a'} Q(s', a') - Q(s, a)\right]
+\]
+
+Tuy nhiên, phương pháp bảng Q (Q-table) có hạn chế nghiêm trọng: không gian trạng thái cần được rời rạc hóa và có kích thước hữu hạn. Trong bài toán điều khiển đèn giao thông, không gian trạng thái là liên tục và có số chiều cao (32 chiều với 8 làn), khiến Q-table trở nên bất khả thi. Đây là động lực để sử dụng mạng nơ-ron sâu.
+
+\subsection{Deep Q-Network (DQN)}
+
+\subsubsection{Xấp xỉ hàm Q bằng mạng nơ-ron}
+
+\textbf{Deep Q-Network (DQN)} thay thế bảng Q bằng một mạng nơ-ron sâu $Q(s, a; \theta)$ tham số hóa bởi $\theta$ để xấp xỉ hàm giá trị hành động:
+\[
+Q(s, a) \approx Q(s, a;\, \theta)
+\]
+
+Mạng nhận đầu vào là vector trạng thái $s$ và đầu ra là giá trị Q cho tất cả các hành động, cho phép xử lý không gian trạng thái liên tục và có số chiều lớn.
+
+\subsubsection{Experience Replay}
+
+Một trong hai kỹ thuật ổn định huấn luyện cốt lõi của DQN là \textbf{Experience Replay}. Các transition $(s, a, r, s', d)$ được lưu vào \textbf{replay buffer} (bộ nhớ kinh nghiệm) dung lượng $N$. Thay vì học trực tiếp từ dữ liệu liên tiếp, agent lấy mẫu ngẫu nhiên một \textit{minibatch} từ buffer để cập nhật mạng.
+
+Kỹ thuật này mang lại hai lợi ích:
+\begin{itemize}
+    \item \textbf{Giảm tương quan}: Dữ liệu liên tiếp trong RL thường có tương quan cao, gây mất ổn định khi huấn luyện. Lấy mẫu ngẫu nhiên phá vỡ tương quan này.
+    \item \textbf{Tái sử dụng dữ liệu}: Mỗi transition có thể được học nhiều lần, tăng hiệu quả sử dụng dữ liệu.
+\end{itemize}
+
+\subsubsection{Target Network}
+
+Kỹ thuật ổn định thứ hai là sử dụng \textbf{mạng target} (target network) $Q(s, a; \theta^-)$ tách biệt với mạng online $Q(s, a; \theta)$. Mạng target được sử dụng để tính TD target:
+\[
+y = r + \gamma \max_{a'} Q(s', a';\, \theta^-)
+\]
+
+Tham số $\theta^-$ được cập nhật định kỳ (hard update) bằng cách sao chép từ $\theta$ mỗi $N_{\text{update}}$ bước, thay vì cập nhật liên tục. Điều này ngăn chặn hiện tượng mục tiêu học tập bị dao động liên tục (\textit{moving target problem}), giúp ổn định quá trình huấn luyện.
+
+\subsubsection{Hàm mục tiêu và hàm mất mát}
+
+DQN tối thiểu hóa sai lệch giữa giá trị Q hiện tại và TD target. Thay vì dùng MSE (Mean Squared Error), DQN sử dụng \textbf{Huber Loss} (Smooth L1 Loss) để giảm độ nhạy cảm với các giá trị ngoại lai (outlier):
+
+\[
+\mathcal{L}(\theta) = \mathbb{E}_{(s,a,r,s') \sim \mathcal{B}}\left[\text{SmoothL1}\!\left(Q(s,a;\theta) - y\right)\right]
+\]
+
+trong đó:
+\[
+\text{SmoothL1}(x) =
+\begin{cases}
+\frac{1}{2}x^2 & \text{nếu } |x| \leq 1 \\
+|x| - \frac{1}{2} & \text{nếu } |x| > 1
+\end{cases}
+\]
+
+Ngoài ra, \textbf{gradient clipping} (giới hạn chuẩn gradient tối đa bằng 10) được áp dụng để ổn định bước cập nhật tham số.
+
+\subsubsection{Chiến lược khám phá Epsilon-Greedy}
+
+Để cân bằng giữa \textbf{khai thác} (exploitation --- sử dụng kiến thức đã học) và \textbf{khám phá} (exploration --- thử nghiệm hành động mới), DQN sử dụng chiến lược $\epsilon$-greedy:
+
+\[
+a_t =
+\begin{cases}
+\text{hành động ngẫu nhiên} & \text{với xác suất } \epsilon \\
+\arg\max_a Q(s_t, a;\theta) & \text{với xác suất } 1 - \epsilon
+\end{cases}
+\]
+
+Trong dự án này, $\epsilon$ giảm tuyến tính từ $\epsilon_{\text{start}} = 1.0$ xuống $\epsilon_{\text{end}} = 0.05$ trong suốt $T = 100.000$ bước đầu:
+\[
+\epsilon(t) = \epsilon_{\text{start}} + \frac{\min(t,\, T)}{T} \cdot (\epsilon_{\text{end}} - \epsilon_{\text{start}})
+\]
+
+Giai đoạn đầu (nhiều exploration) giúp agent thu thập đa dạng kinh nghiệm; giai đoạn sau (nhiều exploitation) giúp agent tinh chỉnh chính sách đã học.
+
+\subsection{Các cải tiến: Double DQN và Dueling Network}
+
+\subsubsection{Double DQN --- Giải quyết Overestimation Bias}
+
+DQN tiêu chuẩn có xu hướng \textbf{ước lượng quá cao} (overestimate) giá trị Q do sử dụng cùng một mạng để vừa chọn hành động vừa đánh giá giá trị của hành động đó:
+\[
+y_{\text{DQN}} = r + \gamma \max_{a'} Q(s', a';\, \theta^-)
+\]
+
+\textbf{Double DQN} giải quyết vấn đề này bằng cách \textit{tách biệt} hai vai trò:
+\begin{itemize}
+    \item \textbf{Mạng online} $Q(\cdot;\theta)$: chọn hành động tốt nhất tại $s'$.
+    \item \textbf{Mạng target} $Q(\cdot;\theta^-)$: đánh giá giá trị của hành động được chọn.
+\end{itemize}
+
+\[
+a^* = \arg\max_{a'} Q(s', a';\, \theta)
+\]
+\[
+y_{\text{Double}} = r + \gamma\, Q(s', a^*;\, \theta^-)
+\]
+
+Sự tách biệt này làm giảm overestimation bias, dẫn đến ước lượng Q chính xác hơn và chính sách ổn định hơn.
+
+\subsubsection{Dueling Network Architecture}
+
+\textbf{Kiến trúc Dueling} (Dueling DQN) tái cấu trúc mạng nơ-ron để tường minh tách biệt hai thành phần của hàm Q:
+
+\begin{itemize}
+    \item \textbf{Value stream} $V(s;\theta_v)$: ước lượng giá trị của trạng thái $s$ bất kể hành động nào được chọn.
+    \item \textbf{Advantage stream} $A(s, a;\theta_a)$: ước lượng lợi thế tương đối của hành động $a$ so với giá trị trung bình của các hành động tại trạng thái $s$.
+\end{itemize}
+
+Hai luồng được kết hợp theo công thức:
+\[
+Q(s, a;\theta) = V(s;\theta_v) + \left[A(s, a;\theta_a) - \frac{1}{|A|}\sum_{a'} A(s, a';\theta_a)\right]
+\]
+
+Việc trừ đi giá trị trung bình của advantage đảm bảo tính duy nhất (identifiability) của $V$ và $A$.
+
+Ưu điểm của Dueling Architecture: trong nhiều tình huống giao thông, giá trị của trạng thái (mức độ ùn tắc) quan trọng hơn việc phân biệt giữa các hành động. Dueling cho phép mạng học $V(s)$ một cách hiệu quả ngay cả khi không cần phân biệt tất cả các hành động, từ đó tăng tốc và ổn định quá trình học.

@@ -1,0 +1,225 @@
+\section{Chương III: Phương pháp đề xuất}
+
+\subsection{Tổng quan hệ thống}
+
+Hệ thống được đề xuất gồm ba lớp chính tương tác với nhau:
+
+\begin{enumerate}
+    \item \textbf{Lớp môi trường mô phỏng} (SUMO): tái tạo ngã tư đô thị với luồng phương tiện đặc trưng Việt Nam.
+    \item \textbf{Lớp ánh xạ MDP}: chuyển đổi dữ liệu từ SUMO thành không gian trạng thái, hành động và phần thưởng theo chuẩn MDP.
+    \item \textbf{Lớp agent DQN}: mạng nơ-ron Deep Q-Network nhận trạng thái, ra quyết định chọn pha đèn và cập nhật trọng số qua quá trình học.
+\end{enumerate}
+
+Vòng lặp hoạt động tổng quát: tại mỗi bước, agent quan sát trạng thái $s_t$ từ SUMO thông qua TraCI API, chọn hành động $a_t$ (pha đèn), thực thi pha đó trong 5 giây mô phỏng, nhận phần thưởng $r_t$ và trạng thái mới $s_{t+1}$, rồi lưu transition vào replay buffer và cập nhật mạng.
+
+\subsection{Môi trường mô phỏng SUMO}
+
+\subsubsection{Phần mềm SUMO và TraCI}
+
+\textbf{SUMO} (Simulation of Urban MObility) là phần mềm mô phỏng giao thông đô thị mã nguồn mở, cho phép mô hình hóa chi tiết chuyển động của từng phương tiện, hành vi tại nút giao và hoạt động của đèn tín hiệu. Giao tiếp giữa Python và SUMO được thực hiện qua \textbf{TraCI} (Traffic Control Interface) API, cho phép:
+\begin{itemize}
+    \item Đọc trạng thái giao thông theo thời gian thực (số xe dừng, tốc độ, thời gian chờ...).
+    \item Điều khiển pha đèn tín hiệu từ bên ngoài (\texttt{setPhase}, \texttt{setPhaseDuration}).
+    \item Tiến hành từng bước mô phỏng (\texttt{simulationStep}).
+\end{itemize}
+
+\subsubsection{Kịch bản ngã tư Hà Nội mẫu}
+
+Kịch bản được xây dựng mô phỏng một ngã tư 4 hướng đặc trưng tại đô thị Hà Nội, gồm:
+
+\begin{itemize}
+    \item \textbf{Cấu trúc mạng lưới}: Nút trung tâm \texttt{c} (có đèn tín hiệu) kết nối 4 hướng Bắc (\texttt{n}), Nam (\texttt{s}), Đông (\texttt{e}), Tây (\texttt{w}). Mỗi hướng có 2 làn xe vào và 2 làn xe ra, tốc độ tối đa $50$ km/h ($\approx 13.9$ m/s).
+    \item \textbf{Thời gian mô phỏng}: 3600 giây (1 giờ), đại diện cho một khung giờ cao điểm.
+    \item \textbf{Giai đoạn khởi động} (warmup): 60 giây đầu chạy mô phỏng không can thiệp để tạo mật độ giao thông ban đầu ổn định trước khi agent bắt đầu điều khiển.
+\end{itemize}
+
+\subsubsection{Phân bố phương tiện đặc trưng Việt Nam}
+
+Kịch bản tích hợp 4 loại phương tiện phản ánh thực tế giao thông Việt Nam:
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Loại xe} & \textbf{Tỉ lệ (\%)} & \textbf{Chiều dài (m)} & \textbf{Tốc độ tối đa (m/s)} & \textbf{Hệ số PCU} \\
+\hline
+Xe máy (motorcycle) & $\sim$60 & 2.0 & 16.67 & 0.5 \\
+Ô tô (car) & $\sim$30 & 5.0 & 13.89 & 1.5 \\
+Xe buýt (bus) & $\sim$5 & 12.0 & 11.11 & 2.0 \\
+Xe tải (truck) & $\sim$5 & 7.5 & 11.11 & 2.0 \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{6pt}
+Hệ số PCU (Passenger Car Unit) được chuẩn hóa theo thực tế Việt Nam: 1 ô tô tương đương 3 xe máy về chiếm dụng diện tích và ảnh hưởng đến năng lực thông hành.
+
+\subsection{Ánh xạ bài toán sang MDP}
+
+\subsubsection{Không gian trạng thái}
+
+Trạng thái $s_t$ là vector liên tục thu thập từ tất cả các làn xe vào nút, trong đó mỗi làn được biểu diễn bởi 4 đặc trưng:
+
+\begin{itemize}
+    \item $q_i$: \textbf{Số xe dừng} (queue length) trên làn $i$ --- số phương tiện có tốc độ gần bằng 0.
+    \item $v_i$: \textbf{Tốc độ trung bình} (average speed) trên làn $i$ tính bằng m/s.
+    \item $w_i$: \textbf{Thời gian chờ tích lũy} (waiting time) trên làn $i$ tính bằng giây.
+    \item $c_i$: \textbf{Số xe quy đổi PCU} (weighted vehicle count) trên làn $i$ --- tổng trọng số PCU của tất cả xe đang có mặt.
+\end{itemize}
+
+Với $L = 8$ làn (4 hướng $\times$ 2 làn/hướng), vector trạng thái có số chiều:
+\[
+s_t \in \mathbb{R}^{4L} = \mathbb{R}^{32}
+\]
+
+Trọng số PCU theo loại xe:
+\[
+c_i = \sum_{v \in \text{lane}_i}
+\begin{cases}
+0.5 & \text{nếu } v \text{ là xe máy} \\
+1.5 & \text{nếu } v \text{ là ô tô} \\
+2.0 & \text{nếu } v \text{ là xe buýt hoặc xe tải}
+\end{cases}
+\]
+
+\subsubsection{Không gian hành động}
+
+Agent có 4 hành động tương ứng với 4 pha tín hiệu được định nghĩa trước:
+
+\begin{center}
+\begin{tabular}{|c|l|l|}
+\hline
+\textbf{Pha} & \textbf{Hướng được phép} & \textbf{Mô tả} \\
+\hline
+$a_0$ & Bắc--Nam \textcolor{green}{\textbf{xanh}} & Xe đi thẳng và rẽ phải hướng Bắc/Nam \\
+$a_1$ & Bắc--Nam \textcolor{green}{\textbf{xanh trái}} & Xe rẽ trái hướng Bắc/Nam \\
+$a_2$ & Đông--Tây \textcolor{green}{\textbf{xanh}} & Xe đi thẳng và rẽ phải hướng Đông/Tây \\
+$a_3$ & Đông--Tây \textcolor{green}{\textbf{xanh trái}} & Xe rẽ trái hướng Đông/Tây \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{6pt}
+Agent chọn một hành động mỗi \textbf{5 giây} mô phỏng (\texttt{action\_duration = 5s}). Tại mỗi bước, SUMO tiến thêm 5 bước giây (\texttt{simulationStep}) với pha đèn được giữ nguyên.
+
+\subsubsection{Hàm phần thưởng}
+
+Hàm phần thưởng được thiết kế để phạt trực tiếp tình trạng ùn tắc:
+\[
+R_t = -\left(Q_t + \frac{W_t}{60}\right) + \text{penalty}
+\]
+
+trong đó:
+\begin{itemize}
+    \item $Q_t = \sum_{i=1}^{L} q_i^{(t)}$: tổng số xe dừng trên tất cả các làn tại bước $t$.
+    \item $W_t = \sum_{i=1}^{L} w_i^{(t)}$: tổng thời gian chờ (giây) trên tất cả các làn, chia 60 để chuẩn hóa về cùng đơn vị với $Q_t$.
+    \item $\text{penalty}$: phạt thêm $-1.0$ nếu agent cố chuyển pha trước khi hết thời gian giữ tối thiểu.
+\end{itemize}
+
+Phần thưởng $R_t$ luôn âm; giá trị càng gần 0 biểu thị giao thông càng thông thoáng. Mục tiêu của agent là tối đa hóa tổng phần thưởng, tương đương với việc tối thiểu hóa hàng đợi và thời gian chờ.
+
+\subsubsection{Ràng buộc thời gian giữ pha}
+
+Để đảm bảo an toàn giao thông và ổn định quá trình học, hệ thống áp đặt ba ràng buộc về thời gian giữ pha:
+
+\begin{itemize}
+    \item \textbf{Thời gian giữ tối thiểu} $t_{\min} = 30$ giây (tương đương 6 bước với $\Delta t = 5$s):
+    \begin{itemize}
+        \item Nếu agent muốn chuyển pha nhưng pha hiện tại chưa được giữ đủ 30 giây, hệ thống \textit{bác bỏ hành động}, tiếp tục giữ pha cũ và áp dụng mức phạt $-1.0$ vào phần thưởng.
+        \item Ý nghĩa: ngăn tình huống đèn xanh chỉ kéo dài vài giây, gây nguy hiểm cho phương tiện đang đi qua giao lộ.
+    \end{itemize}
+
+    \item \textbf{Thời gian giữ tối đa} $t_{\max} = 120$ giây (tương đương 24 bước):
+    \begin{itemize}
+        \item Nếu một pha đã được giữ quá 120 giây, hệ thống \textit{bắt buộc chuyển} sang pha kế tiếp trong chu kỳ, bất kể quyết định của agent.
+        \item Ý nghĩa: ngăn tình trạng một hướng bị kẹt đỏ vô thời hạn, đảm bảo công bằng cho tất cả các hướng.
+    \end{itemize}
+
+    \item \textbf{Phạt chuyển sớm}: Mỗi lần agent cố chuyển pha trước $t_{\min}$, phần thưởng bị trừ thêm $-1.0$, khuyến khích agent học được tính kiên nhẫn giữ pha đủ thời gian.
+\end{itemize}
+
+\subsection{Kiến trúc mạng Deep Q-Network}
+
+\subsubsection{Backbone MLP}
+
+Mạng backbone gồm 2 lớp ẩn kết nối đầy đủ (fully connected), mỗi lớp 128 neuron:
+\[
+\text{Input}(32) \xrightarrow{\text{FC}+\text{LN}+\text{ReLU}} 128 \xrightarrow{\text{FC}+\text{LN}+\text{ReLU}} 128
+\]
+
+Mỗi lớp ẩn sử dụng tổ hợp:
+\begin{itemize}
+    \item \textbf{Linear} (kết nối tuyến tính),
+    \item \textbf{LayerNorm} (chuẩn hóa lớp) --- ổn định phân phối kích hoạt theo chiều đặc trưng,
+    \item \textbf{ReLU} (hàm kích hoạt phi tuyến).
+\end{itemize}
+
+\subsubsection{Hai nhánh Dueling}
+
+Sau backbone, mạng tách thành hai nhánh song song:
+
+\textbf{Value stream} (ước lượng giá trị trạng thái):
+\[
+V(s;\theta_v): 128 \xrightarrow{\text{FC}+\text{ReLU}} 128 \xrightarrow{\text{FC}} 1
+\]
+
+\textbf{Advantage stream} (ước lượng lợi thế hành động):
+\[
+A(s,a;\theta_a): 128 \xrightarrow{\text{FC}+\text{ReLU}} 128 \xrightarrow{\text{FC}} 4
+\]
+
+Đầu ra Q được tổng hợp:
+\[
+Q(s, a;\theta) = V(s;\theta_v) + A(s, a;\theta_a) - \frac{1}{4}\sum_{a'=0}^{3} A(s, a';\theta_a)
+\]
+
+Toàn bộ tham số được khởi tạo bằng \textbf{Kaiming Uniform} để tránh vanishing/exploding gradient khi huấn luyện sâu.
+
+\subsection{Cấu hình huấn luyện}
+
+\subsubsection{Siêu tham số}
+
+\begin{center}
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Tham số} & \textbf{Giá trị} & \textbf{Mô tả} \\
+\hline
+Tổng bước huấn luyện & 200.000 & Số bước tương tác agent--môi trường \\
+Bước bắt đầu train & 10.000 & Thu thập kinh nghiệm trước khi học \\
+Kích thước replay buffer & 100.000 & Số transition lưu trong bộ nhớ \\
+Kích thước batch & 64 & Số mẫu mỗi lần cập nhật mạng \\
+Hệ số chiết khấu $\gamma$ & 0.99 & Tầm quan trọng phần thưởng dài hạn \\
+Learning rate $\alpha$ & 0.0005 & Tốc độ học của Adam optimizer \\
+Cập nhật target network & mỗi 2.000 bước & Hard copy tham số \\
+Gradient clipping & 10.0 & Giới hạn chuẩn gradient \\
+$\epsilon_{\text{start}}$ & 1.0 & Epsilon khởi đầu (toàn khám phá) \\
+$\epsilon_{\text{end}}$ & 0.05 & Epsilon cuối (5\% khám phá) \\
+Số bước giảm $\epsilon$ & 100.000 & Giảm tuyến tính trong 100k bước đầu \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Bộ điều khiển baseline (Fixed-Time)}
+
+Để so sánh, nhóm xây dựng bộ điều khiển thời gian cố định với cấu hình:
+\begin{itemize}
+    \item Chu kỳ đèn: 4 pha $\times$ (55 giây xanh + 5 giây vàng) $= 240$ giây.
+    \item Luân chuyển pha theo thứ tự cố định $a_0 \to a_1 \to a_2 \to a_3 \to a_0 \to \cdots$
+    \item Không có khả năng thích ứng với tình trạng giao thông thực tế.
+\end{itemize}
+
+\subsubsection{Vòng lặp huấn luyện tổng quát}
+
+\begin{enumerate}
+    \item Khởi tạo môi trường SUMO, agent DQN, replay buffer và lịch giảm $\epsilon$.
+    \item Lặp lại trong $T = 200.000$ bước:
+    \begin{enumerate}
+        \item Tính $\epsilon_t$ theo lịch giảm tuyến tính.
+        \item Agent chọn hành động $a_t$ theo $\epsilon$-greedy từ trạng thái $s_t$.
+        \item Thực thi $a_t$: SUMO tiến 5 bước giây và trả về $(r_t, s_{t+1}, \text{done})$.
+        \item Lưu transition $(s_t, a_t, r_t, s_{t+1}, \text{done})$ vào replay buffer.
+        \item Nếu buffer có đủ $\geq 10.000$ mẫu: lấy batch 64 mẫu, tính loss Double DQN, cập nhật $\theta$ bằng Adam.
+        \item Mỗi 2.000 bước: cập nhật target network $\theta^- \leftarrow \theta$.
+        \item Nếu episode kết thúc (sau 3600 giây): reset môi trường SUMO.
+    \end{enumerate}
+    \item Lưu trọng số model tốt nhất vào \texttt{outputs/dqn\_vn\_tls.pt}.
+\end{enumerate}
