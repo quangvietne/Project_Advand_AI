@@ -1,0 +1,171 @@
+
+## HƯỚNG DẪN CHẠY LẠI TỪ ĐẦU (Step-by-step)
+
+### BƯỚC 0 — Chuẩn bị môi trường (chỉ cần làm 1 lần)
+
+**0a. Cài SUMO** (nếu chưa có)
+
+Tải từ [https://sumo.dlr.de/docs/Downloads.php](https://sumo.dlr.de/docs/Downloads.php) → cài Windows installer, sau đó:
+
+```powershell
+# Thiết lập SUMO_HOME vĩnh viễn (thay đường dẫn thực tế trên máy bạn)
+[System.Environment]::SetEnvironmentVariable("SUMO_HOME", "C:\Program Files (x86)\Eclipse\Sumo", "User")
+
+# Kiểm tra ngay trong session hiện tại
+$env:SUMO_HOME = "C:\Program Files (x86)\Eclipse\Sumo"
+Write-Host $env:SUMO_HOME
+```
+
+> **Kết quả mong đợi:** In ra đường dẫn SUMO (VD: `C:\Program Files (x86)\Eclipse\Sumo`)
+
+**0b. Cài Python dependencies**
+
+```powershell
+cd "D:\Study\Advand AI\Project_Advand_AI"
+pip install -r requirements.txt
+pip install scipy matplotlib openpyxl jupyter
+```
+
+> **Kết quả mong đợi:** Tất cả package cài xong, không có lỗi đỏ
+
+---
+
+### BƯỚC 1 — Kiểm tra cài đặt
+
+```powershell
+cd "D:\Study\Advand AI\Project_Advand_AI"
+python tests/test_imports.py
+```
+
+> **Kết quả mong đợi:** In ra các dòng PASS, không có ImportError hay lỗi SUMO_HOME
+
+---
+
+### BƯỚC 2 — Kiểm tra môi trường SUMO (tùy chọn nhưng nên làm)
+
+```powershell
+cd "D:\Study\Advand AI\Project_Advand_AI"
+python tests/test_env.py
+```
+
+> **Kết quả mong đợi:** SUMO khởi động, chạy vài bước random action, in state/reward, kết thúc không lỗi
+
+---
+
+### BƯỚC 3 — Kiểm tra config trước khi train
+
+Mở `config.yaml` và xác nhận các giá trị quan trọng:
+
+```yaml
+sumo:
+  gui: false          # ← PHẢI là false để train nhanh
+  max_steps: 3600     # 1 giờ mô phỏng/episode
+  warmup_steps: 60    # khởi động 60 giây
+
+train:
+  total_steps: 200000 # tổng số bước train
+  start_train: 10000  # bắt đầu update sau 10,000 bước
+
+output_dir: outputs   # kết quả lưu vào thư mục này
+```
+
+---
+
+### BƯỚC 4 — HUẤN LUYỆN (lệnh chính)
+
+```powershell
+cd "D:\Study\Advand AI\Project_Advand_AI"
+python scripts/train.py
+```
+
+> **Kết quả mong đợi trong terminal:**
+> ```
+> Training:   5%|████          | 10000/200000 [...]  R=-45.2  best=-inf  eps=0.95  loss=nan
+> Training:  10%|████████      | 20000/200000 [...]  R=-38.1  best=-45.2  eps=0.90  loss=0.043
+> ...
+> ✓ Final model saved to outputs/dqn_vn_tls.pt
+> ✓ Best model saved to  outputs/dqn_vn_tls_best.pt
+> ```
+> **Thời gian:** ~30–90 phút tùy cấu hình máy (CPU/GPU)
+
+**File được tạo ra:**
+```
+outputs/
+├── dqn_vn_tls.pt       ← Model weights cuối cùng
+└── dqn_vn_tls_best.pt  ← Model weights tốt nhất (episode reward cao nhất)
+```
+
+---
+
+### BƯỚC 5 — ĐÁNH GIÁ MODEL ĐÃ TRAIN
+
+```powershell
+cd "D:\Study\Advand AI\Project_Advand_AI"
+python scripts/validate.py
+```
+
+> **Kết quả mong đợi:** In metrics (queue, wait, throughput, speed) của model DQN trên episode đánh giá
+
+---
+
+### BƯỚC 6 — SO SÁNH DQN vs FIXED-TIME BASELINE
+
+```powershell
+cd "D:\Study\Advand AI\Project_Advand_AI"
+python scripts/compare_strategies.py
+```
+
+> **Kết quả mong đợi:** Bảng so sánh 5 chỉ số (hàng chờ, thời gian đợi, throughput, tốc độ, occupancy) giữa DQN và Fixed-Time. File CSV được lưu trong `outputs/`
+
+**Hoặc chạy song song (nhanh hơn):**
+
+```powershell
+python scripts/parallel_comparison.py
+```
+
+---
+
+### BƯỚC 7 — XEM TRỰC QUAN (tùy chọn)
+
+Xem DQN điều khiển đèn với SUMO-GUI:
+
+```powershell
+python scripts/gui.py
+```
+
+> **Kết quả mong đợi:** Cửa sổ SUMO-GUI mở ra, hiển thị ngã tư với xe cộ di chuyển và đèn giao thông thay đổi theo quyết định của DQN
+
+---
+
+### BƯỚC 8 — PHÂN TÍCH KẾT QUẢ (Notebook)
+
+```powershell
+cd "D:\Study\Advand AI\Project_Advand_AI"
+jupyter notebook
+```
+
+Sau đó mở lần lượt:
+1. `chapter4_evaluation.ipynb` — phân tích thống kê kết quả
+2. `chapter4_visualization.ipynb` — vẽ biểu đồ so sánh
+
+> **Kết quả mong đợi:** Biểu đồ PNG (300 DPI) và file Excel báo cáo được tạo ra trong notebook
+
+---
+
+### TÓM TẮT THỨ TỰ CHẠY
+
+```
+test_imports.py  →  test_env.py  →  train.py  →  validate.py  →  compare_strategies.py  →  notebook
+   (kiểm tra)       (kiểm tra)     (train)      (đánh giá)        (so sánh)              (phân tích)
+```
+
+### KẾT QUẢ SẼ LƯU Ở ĐÂU
+
+```
+outputs/
+├── dqn_vn_tls.pt              ← Model cuối
+├── dqn_vn_tls_best.pt         ← Model tốt nhất
+├── comparison_results.csv     ← Bảng so sánh DQN vs Fixed-Time
+├── training_summary.txt       ← Log tóm tắt quá trình train
+└── figures/                   ← Biểu đồ (từ notebook)
+```

@@ -35,8 +35,8 @@ def run_simulation(mode: str = "dqn", steps: int = 3600) -> None:
         tls_id=sumo_cfg.get("tls_id", "c"),
         phases=sumo_cfg.get("phases", [0, 1, 2, 3]),
         action_duration=_action_dur,
-        min_phase_steps=max(1, sumo_cfg.get("min_phase_duration", 30) // _action_dur),
-        max_phase_steps=max(2, sumo_cfg.get("max_phase_duration", 120) // _action_dur),
+        min_phase_steps=max(1, sumo_cfg.get("min_phase_duration", 5) // _action_dur),
+        max_phase_steps=max(2, sumo_cfg.get("max_phase_duration", 140) // _action_dur),
         max_steps=steps,
         gui=True,  # GUI mode is the purpose of this script
         vn_weights=VNWeights(
@@ -45,6 +45,14 @@ def run_simulation(mode: str = "dqn", steps: int = 3600) -> None:
             bus=vn_cfg.get("bus", 2.0),
             truck=vn_cfg.get("truck", 2.0),
         ),
+        phase_green_min={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_min", {}).items()
+        },
+        phase_green_max={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_max", {}).items()
+        },
     )
 
     print(f"\nStarting SUMO Traffic Simulator...")
@@ -54,24 +62,32 @@ def run_simulation(mode: str = "dqn", steps: int = 3600) -> None:
     state = env.reset()
     action_dim = env.action_dim
 
-    # Load DQN agent if requested
+    # Load DQN agent if requested — ưu tiên best model, fallback sang final model
     agent = None
     if mode == "dqn":
-        model_path = Path("outputs/dqn_vn_tls.pt")
-        if model_path.exists():
-            agent = load_dqn_agent(model_path, env.state_dim, action_dim)
+        _candidates = [
+            Path("outputs/dqn_vn_tls_best.pt"),
+            Path("outputs/dqn_vn_tls.pt"),
+        ]
+        for _candidate in _candidates:
+            if _candidate.exists():
+                agent = load_dqn_agent(_candidate, env.state_dim, action_dim)
+                if agent is not None:
+                    break
         if agent is None:
             print("Warning: DQN model not found or failed to load, falling back to random.")
 
     # Build fixed-time phase sequence for baseline/fixed modes
+    _ft_schedule = sumo_cfg.get("fixed_time_phase_schedule", [(2, 100), (3, 5), (0, 50), (1, 5)])
     phase_seq: list = []
     if mode in ("fixed", "baseline"):
-        green_steps = max(1, 55 // _action_dur)
-        yellow_steps = max(1, 5 // _action_dur)
-        phase_seq = (
-            [0] * green_steps + [1] * yellow_steps +
-            [2] * green_steps + [3] * yellow_steps
+        _ft = FixedTimeController(
+            FixedTimeConfig(
+                phase_schedule=[tuple(p) for p in _ft_schedule],
+                action_duration=_action_dur,
+            )
         )
+        phase_seq = list(_ft._sequence)
 
     print("\nRunning simulation...\n")
     total_reward = 0.0

@@ -1,0 +1,112 @@
+% ============================================================
+%  main.tex — Slide Thuyết Trình Luận Văn
+%  Biên dịch: pdflatex main.tex  (chạy 2 lần để có ToC đúng)
+%  Yêu cầu: TeX Live / MiKTeX đầy đủ (gói beamer, tikz, booktabs)
+% ============================================================
+\documentclass[aspectratio=169, 12pt]{beamer}
+
+% ---- Encoding & Language (pdflatex + Vietnamese) ----
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+
+% ---- Math ----
+\usepackage{amsmath, amssymb}
+
+% ---- Graphics & Color ----
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, calc}
+
+% ---- Tables ----
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{array}
+
+% ---- Misc ----
+\usepackage{hyperref}
+
+% ============================================================
+%  THEME & COLORS
+% ============================================================
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\definecolor{vnblue}{RGB}{0, 82, 155}
+\definecolor{vnred}{RGB}{218, 37, 29}
+\definecolor{techgreen}{RGB}{39, 174, 96}
+\definecolor{softorange}{RGB}{230, 126, 34}
+\definecolor{lightblue}{RGB}{220, 235, 255}
+\definecolor{lightgreen}{RGB}{212, 248, 220}
+\definecolor{lightyellow}{RGB}{255, 243, 196}
+
+\setbeamercolor{structure}{fg=vnblue}
+\setbeamercolor{palette primary}{bg=vnblue, fg=white}
+\setbeamercolor{palette secondary}{bg=vnblue!80!black, fg=white}
+\setbeamercolor{palette tertiary}{bg=vnblue!60!black, fg=white}
+\setbeamercolor{frametitle}{bg=vnblue, fg=white}
+\setbeamercolor{title}{fg=white, bg=vnblue}
+\setbeamercolor{subtitle}{fg=lightblue}
+\setbeamercolor{block title}{bg=vnblue!85, fg=white}
+\setbeamercolor{block body}{bg=lightblue}
+\setbeamercolor{alertblock title}{bg=vnred!85, fg=white}
+\setbeamercolor{alertblock body}{bg=vnred!10}
+\setbeamercolor{exampleblock title}{bg=techgreen!80, fg=white}
+\setbeamercolor{exampleblock body}{bg=lightgreen}
+\setbeamercolor{alerted text}{fg=vnred}
+\setbeamercolor{itemize item}{fg=vnblue}
+\setbeamercolor{itemize subitem}{fg=vnblue!70}
+\setbeamercolor{enumerate item}{fg=vnblue}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}{\small$\blacktriangleright$}
+\setbeamertemplate{itemize subitem}{\small$\triangleright$}
+
+% Section title frame
+\AtBeginSection[]{
+  \begin{frame}
+    \vfill
+    \centering
+    \begin{beamercolorbox}[sep=12pt, center, shadow=true, rounded=true]{frametitle}
+      \usebeamerfont{title}\insertsectionhead
+    \end{beamercolorbox}
+    \vfill
+  \end{frame}
+}
+
+% ============================================================
+%  TITLE INFO
+% ============================================================
+\title[DQN Điều khiển Đèn Giao thông]{%
+  Tối ưu hóa Điều khiển Đèn Tín hiệu Giao thông\\[4pt]
+  dựa trên Mô hình Quyết định Markov}
+\subtitle{Double Dueling DQN + SUMO Simulation}
+\author[Nhóm nghiên cứu]{Nhóm nghiên cứu}
+\institute[ĐHQGHN -- KHTN]{%
+  Trường Đại học Khoa học Tự nhiên\\
+  Đại học Quốc gia Hà Nội}
+\date{\today}
+
+% ============================================================
+\begin{document}
+
+% --- Title slide ---
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% --- Table of Contents ---
+\begin{frame}{Nội dung trình bày}
+  \tableofcontents[hideallsubsections]
+\end{frame}
+
+% --- Chapters ---
+\input{slide_ch1}
+\input{slide_ch2}
+\input{slide_ch3}
+\input{slide_ch4}
+\input{slide_ch5}
+
+\end{document}

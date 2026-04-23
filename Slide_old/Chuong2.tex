@@ -1,0 +1,129 @@
+% =========================================
+% PHẦN 2: Quá trình Quyết định Markov (MDP)
+% =========================================
+
+\begin{frame}
+  \centering
+  \Huge \textbf{PHẦN 2} \\[0.5cm]
+  \LARGE Quá trình Quyết định Markov (MDP)
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Quá trình Quyết định Markov (MDP) (1)}
+\begin{itemize}
+    \item \textbf{Định nghĩa:} MDP là khung toán học cho việc ra quyết định trong môi trường ngẫu nhiên.
+    \item \textbf{Thành phần của MDP:}
+    \begin{itemize}
+        \item $S$: Không gian trạng thái
+        \item $A$: Không gian hành động
+        \item $P(s'|s,a)$: Hàm xác suất chuyển trạng thái — xác suất chuyển từ trạng thái $s$ sang $s'$ sau khi thực hiện hành động $a$.
+        \item $R(s,a)$: Hàm phần thưởng — đánh giá mức độ hiệu quả của hành động $a$ tại trạng thái $s$.
+    \end{itemize}
+    \item \textbf{Tính chất Markov:}
+    \[
+    P(s_{t+1} | s_t, a_t) = P(s_{t+1} | s_0, a_0, \ldots, s_t, a_t)
+    \]
+    Trạng thái tương lai \textbf{chỉ phụ thuộc} vào trạng thái hiện tại, không phụ thuộc lịch sử trước đó.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Quá trình Quyết định Markov (MDP) (2)}
+\begin{itemize}
+    \item \textbf{Mục tiêu:} Tìm ra chính sách tối ưu $\pi^*(a|s)$ ánh xạ trạng thái sang hành động nhằm tối đa hóa phần thưởng chiết khấu lũy kế kỳ vọng:
+    \[
+    \pi^* = \arg\max_\pi\; \mathbb{E}\left[\sum_{t=0}^{\infty} \gamma^t R(s_t, a_t)\right]
+    \]
+    \item Trong đó $\gamma \in (0,1]$ là \textbf{hệ số chiết khấu} — đại diện cho tầm quan trọng tương đối của phần thưởng tương lai so với phần thưởng tức thì.
+    \item Dự án sử dụng $\gamma = 0.99$ — ưu tiên tối ưu hóa dài hạn trong suốt 1 giờ mô phỏng.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Ánh xạ bài toán đèn giao thông sang MDP (1)}
+\begin{itemize}
+    \item \textbf{Tác nhân (Agent):} Hệ thống điều khiển tín hiệu giao thông (DQN agent)
+    \item \textbf{Môi trường:} Ngã tư 4 hướng được mô phỏng bởi \textbf{SUMO}, giao tiếp qua \textbf{TraCI API}
+    \item \textbf{Trạng thái ($s$):} Vector liên tục thu thập từ 8 làn xe vào nút
+    \begin{itemize}
+        \item Mỗi làn được biểu diễn bởi \textbf{4 đặc trưng}:
+            \begin{itemize}
+                \item Số xe dừng — queue length ($q_i$)
+                \item Tốc độ trung bình — average speed ($v_i$)
+                \item Thời gian chờ tích lũy — waiting time ($w_i$)
+                \item Số xe quy đổi PCU — weighted vehicle count ($c_i$)
+            \end{itemize}
+        \item 4 hướng $\times$ 2 làn/hướng $\times$ 4 đặc trưng $= s \in \mathbb{R}^{32}$
+        \item \textbf{Hệ số PCU Việt Nam:} xe máy (0.5), ô tô (1.5), xe buýt/tải (2.0)
+        \item $q_i$, $w_i$, $c_i$ được nhân thêm \textbf{direction weight} theo hướng xe để agent ưu tiên hướng có lưu lượng lớn hơn
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Ánh xạ bài toán đèn giao thông sang MDP (2)}
+\begin{itemize}
+    \item \textbf{Không gian hành động ($A$):} 4 pha tín hiệu được định nghĩa trước
+    \begin{itemize}
+        \item $a_0$ (Pha 0): Bắc -- Nam \textbf{xanh} — cho phép xe từ hướng Bắc/Nam
+        \item $a_1$ (Pha 1): Bắc -- Nam \textbf{vàng} — pha giải phóng trước khi chuyển sang Đông/Tây
+        \item $a_2$ (Pha 2): Đông -- Tây \textbf{xanh} — cho phép xe từ hướng Đông/Tây
+        \item $a_3$ (Pha 3): Đông -- Tây \textbf{vàng} — pha giải phóng trước khi chuyển sang Bắc/Nam
+    \end{itemize}
+    \item Agent ra quyết định mỗi \textbf{5 giây} mô phỏng (\texttt{action\_duration = 5s})
+    \item Kịch bản lưu lượng bất đối xứng: \textbf{Đông--Tây : Bắc--Nam = 2:1}\\
+          EW xanh tối thiểu giữ 60s; NS xanh tối thiểu giữ 30s
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Ràng buộc Thời gian Pha (Per-Phase Constraint)}
+\begin{itemize}
+    \item \textbf{Vấn đề:} Nếu agent chuyển pha tùy ý, có thể gây hỗn loạn:
+    \begin{itemize}
+        \item Pha xanh chỉ kéo 5 giây → phương tiện vừa vào giao lộ không kịp qua
+        \item Không ổn định trong quá trình học → reward dao động lớn
+    \end{itemize}
+
+    \item \textbf{Giải pháp:} Ràng buộc riêng biệt cho từng pha xanh:
+    \begin{itemize}
+        \item \textbf{Pha 2 — EW xanh (trục chính):} $t_{\min} = 60$s, $t_{\max} = 140$s
+        \item \textbf{Pha 0 — NS xanh (trục phụ):} $t_{\min} = 30$s, $t_{\max} = 70$s
+    \end{itemize}
+
+    \item \textbf{Cơ chế thi hành:}
+    \begin{itemize}
+        \item Chuyển pha trước $t_{\min}$: \textbf{bác bỏ hành động} + phạt reward $-1.0$
+        \item Giữ pha vượt $t_{\max}$: \textbf{bắt buộc chuyển} sang pha kế tiếp
+    \end{itemize}
+
+    \item \textbf{Hiệu ứng bất đối xứng có chủ ý:} EW có $t_{\min}$ gấp đôi NS → agent tự nhiên học ưu tiên trục chính, phù hợp tỉ lệ lưu lượng 2:1.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Ánh xạ bài toán đèn giao thông sang MDP (3)}
+\begin{itemize}
+    \item \textbf{Hàm phần thưởng ($R$):}
+    \begin{itemize}
+        \item Phần thưởng được tính dựa trên mức phạt từ tình trạng ùn tắc hiện tại:
+        \[
+        R_t = -\left( Q_t + \frac{W_t}{60} \right) + \text{penalty}
+        \]
+        \begin{itemize}
+            \item $Q_t$: tổng số xe dừng (queue) trên tất cả làn, có nhân direction weight
+            \item $W_t$: tổng thời gian chờ trên tất cả làn, chia 60 để chuẩn hóa đơn vị
+            \item $\text{penalty} = -1.0$: áp dụng khi agent cố chuyển pha trước $t_{\min}$
+        \end{itemize}
+        \item $R_t$ càng gần 0: giao thông càng thông thoáng
+        \item $R_t$ càng âm: ùn tắc càng nghiêm trọng
+    \end{itemize}
+
+    \item \textbf{Chuyển đổi trạng thái ($P$):}
+    \begin{itemize}
+        \item Phụ thuộc vào hành động $a_t$ (pha đèn được áp dụng)
+        \item Động lực học phương tiện trong mô phỏng SUMO
+        \item Sự xuất hiện ngẫu nhiên của xe mới theo phân bố xác suất cố định
+    \end{itemize}
+\end{itemize}
+\end{frame}

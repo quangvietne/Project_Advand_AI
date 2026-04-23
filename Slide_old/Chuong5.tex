@@ -1,0 +1,136 @@
+% =========================================
+% PHẦN 5: Kết quả thực nghiệm
+% =========================================
+
+\begin{frame}
+  \centering
+  \Huge \textbf{PHẦN 5} \\[0.5cm]
+  \LARGE Kết quả thực nghiệm
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Thiết lập thực nghiệm}
+\begin{columns}
+\column{0.50\textwidth}
+\textbf{Môi trường mô phỏng:}
+\begin{itemize}
+    \item Kịch bản: Ngã tư 4 hướng, Hà Nội mẫu (SUMO)
+    \item Thời gian mỗi episode: 3600 giây (1 giờ)
+    \item Warmup: 60 giây trước khi agent can thiệp
+    \item Lưu lượng EW:NS = 2:1; 60\% xe máy
+    \item GUI: tắt (headless) khi huấn luyện
+\end{itemize}
+
+\column{0.46\textwidth}
+\textbf{Baseline so sánh — Fixed-Time 160s:}
+\begin{itemize}
+    \item EW xanh: 100s $\to$ EW vàng: 5s
+    \item NS xanh: 50s $\to$ NS vàng: 5s
+    \item Chu kỳ cố định, \textbf{không thích ứng}
+    \item Tỉ lệ 2:1 đã được phản ánh trong baseline
+\end{itemize}
+\end{columns}
+
+\vspace{8pt}
+\textbf{5 chỉ số đánh giá chính:}
+\begin{itemize}
+    \item Độ dài hàng đợi trung bình và cực đại (xe dừng)
+    \item Thời gian chờ trung bình (giây/bước)
+    \item Tốc độ lưu thông trung bình (m/s)
+    \item Lưu lượng xe qua nút / episode (throughput)
+    \item Tổng phần thưởng (Total Reward)
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Kết quả so sánh DQN vs. Fixed-Time}
+\begin{center}
+\begin{tabular}{lcccr}
+\toprule
+\textbf{Chỉ số} & \textbf{DQN} & \textbf{Fixed-Time} & \textbf{Thay đổi} & \textbf{Cải thiện} \\
+\midrule
+Hàng đợi TB (xe)    & \textbf{16.05} & 33.13 & $-17.08$ & $\downarrow$51.6\% \\
+Hàng đợi Max (xe)   & \textbf{51}    & 66    & $-15$    & $\downarrow$22.7\% \\
+Độ lệch chuẩn       & \textbf{8.16}  & 12.77 & $-4.61$  & $\downarrow$36.1\% \\
+Thời gian chờ (s)   & \textbf{30.55} & 121.35& $-90.80$ & $\downarrow$74.8\% \\
+Tốc độ TB (m/s)     & \textbf{5.65}  & 4.87  & $+0.78$  & $\uparrow$16.0\%  \\
+Throughput (xe)     & \textbf{344}   & 338   & $+6$     & $\uparrow$1.8\%   \\
+Total Reward        & $\mathbf{-14.754}$ & $-35.512$ & $+20.758$ & $\uparrow$58.5\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{block}{}
+\centering DQN vượt trội hơn Fixed-Time trên tất cả 7 chỉ số
+\end{block}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Phân tích kết quả (1): Hàng đợi và Thời gian chờ}
+\begin{itemize}
+    \item \textbf{Hàng đợi trung bình giảm 51.6\%}
+    \begin{itemize}
+        \item DQN: 16.05 xe/làn \quad Fixed-Time: 33.13 xe/làn
+        \item Độ lệch chuẩn thấp hơn 36.1\% → DQN \textbf{ổn định hơn}, ít đợt ùn tắc đột ngột
+    \end{itemize}
+    \item \textbf{Thời gian chờ giảm 74.8\%} — cải thiện lớn nhất trong tất cả chỉ số
+    \begin{itemize}
+        \item DQN: 30.55 s/bước \quad Fixed-Time: 121.35 s/bước
+    \end{itemize}
+    \item \textbf{Lý do:} Agent học phân bổ pha xanh đúng lúc, đúng hướng:
+    \begin{itemize}
+        \item Quan sát $q_i$, $w_i$ liên tục theo thời gian thực
+        \item Tập trung thời gian xanh vào hướng đang tích lũy xe
+        \item Không lãng phí thời gian xanh khi hướng đó vắng xe
+    \end{itemize}
+    \item \textbf{Fixed-Time không thể làm điều này:} dù NS tắc hay EW trống, đèn vẫn giữ đúng 100s/50s cố định.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Phân tích kết quả (2): Tốc độ, Throughput và Reward}
+\begin{itemize}
+    \item \textbf{Tốc độ lưu thông tăng 16.0\%}
+    \begin{itemize}
+        \item DQN: 5.65 m/s \quad Fixed-Time: 4.87 m/s
+        \item DQN không chỉ giảm hàng đợi mà còn giúp xe di chuyển nhanh hơn tổng thể
+    \end{itemize}
+    \item \textbf{Throughput tăng 1.8\%} (344 vs 338 xe/episode)
+    \begin{itemize}
+        \item Mức cải thiện khiêm tốn — cả hai chiến lược xử lý lượng xe tương đương
+        \item Nhưng DQN thực hiện điều này với \textbf{ít ùn tắc và thời gian chờ thấp hơn đáng kể}
+    \end{itemize}
+    \item \textbf{Total Reward cải thiện 58.5\%}
+    \begin{itemize}
+        \item DQN: $-14.754$ \quad Fixed-Time: $-35.512$
+        \item Reward âm tỉ lệ với mức ùn tắc → DQN cao hơn nghĩa là ít ùn tắc hơn
+        \item Xác nhận agent đã tối ưu hóa thành công hàm mục tiêu đề ra
+    \end{itemize}
+    \item \textbf{Chiến lược học được:} giữ EW $\geq$ 60s, không bỏ quên NS, tránh penalty $-1.0$
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Kết luận và Hướng phát triển}
+\textbf{Kết quả đạt được:}
+\begin{itemize}
+    \item Mô hình hóa thành công bài toán điều khiển đèn dưới dạng MDP với đặc thù giao thông Việt Nam
+    \item Double DQN + Dueling Network vượt trội hơn Fixed-Time 160s trên tất cả các chỉ số
+    \item Giảm hàng đợi \textbf{51.6\%}, thời gian chờ \textbf{74.8\%}, tăng tốc độ \textbf{16.0\%}
+\end{itemize}
+
+\vspace{6pt}
+\textbf{Hướng phát triển:}
+\begin{itemize}
+    \item \textbf{Multi-Agent RL (MARL)}: điều phối đồng thời nhiều nút giao thông
+    \item \textbf{Transfer Learning}: tái sử dụng model đã huấn luyện cho kịch bản mới
+    \item \textbf{Dữ liệu thực}: tích hợp camera/cảm biến tại nút giao Hà Nội thực tế
+    \item \textbf{Reward nâng cao}: bổ sung khí thải, nhiên liệu, mức độ an toàn
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{}
+\centering
+\vspace{2cm}
+{\LARGE \textbf{Cảm ơn thầy/cô và các bạn đã lắng nghe!}}\\[1cm]
+\end{frame}

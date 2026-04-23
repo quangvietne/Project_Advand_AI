@@ -1,0 +1,68 @@
+% =========================================
+% PHẦN 3: Lý thuyết về Học tăng cường (RL)
+% — Viết ngắn gọn, sơ lược —
+% =========================================
+
+\begin{frame}
+  \centering
+  \Huge \textbf{PHẦN 3} \\[0.5cm]
+  \LARGE Lý thuyết về Học tăng cường (Reinforcement Learning)
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Học tăng cường là gì?}
+\begin{itemize}
+    \item Reinforcement Learning (RL) là nhánh học máy trong đó agent học ra quyết định tối ưu thông qua tương tác thử–sai (trial-and-error) với môi trường.
+    \item \textbf{Điểm khác biệt so với Supervised Learning:}
+    \begin{itemize}
+        \item Không cần dữ liệu nhãn đúng–sai tường minh
+        \item Phần thưởng (reward) có thể bị trễ theo thời gian
+        \item Mục tiêu là tối ưu hiệu quả \textbf{dài hạn}, không chỉ phần thưởng tức thì
+    \end{itemize}
+    \item \textbf{Phù hợp với bài toán điều khiển giao thông} vì:
+    \begin{itemize}
+        \item Không cần biết mô hình giao thông tường minh — học từ mô phỏng SUMO
+        \item Tự thích ứng với biến động lưu lượng theo thời gian thực
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Khung tương tác Agent -- Môi trường}
+Tại mỗi thời điểm $t$:
+\begin{enumerate}
+    \item Agent quan sát trạng thái hiện tại $s_t$
+    \item Agent chọn hành động $a_t$ theo chính sách $\pi$
+    \item Môi trường chuyển sang trạng thái $s_{t+1}$
+    \item Agent nhận phần thưởng $r_t$
+\end{enumerate}
+
+\vspace{6pt}
+\textbf{Mục tiêu:} Tìm chính sách $\pi^*$ tối đa hóa tổng phần thưởng chiết khấu:
+\[
+G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1}
+\]
+
+\begin{itemize}
+    \item $\gamma$ nhỏ: ưu tiên phần thưởng ngắn hạn
+    \item $\gamma$ gần 1: ưu tiên phần thưởng dài hạn (dự án dùng $\gamma = 0.99$)
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Chiến lược khám phá $\epsilon$-Greedy}
+\begin{itemize}
+    \item Thách thức cốt lõi của RL: cân bằng giữa \textbf{khai thác} (exploitation) và \textbf{khám phá} (exploration)
+    \item Chiến lược $\epsilon$-greedy:
+    \begin{itemize}
+        \item Với xác suất $\epsilon$: chọn hành động \textbf{ngẫu nhiên} (khám phá)
+        \item Với xác suất $1 - \epsilon$: chọn hành động \textbf{tốt nhất} theo Q hiện tại (khai thác)
+    \end{itemize}
+    \item $\epsilon$ giảm dần tuyến tính theo thời gian:
+    \begin{itemize}
+        \item Giai đoạn đầu: $\epsilon = 1.0$ → agent khám phá hoàn toàn
+        \item Giai đoạn cuối: $\epsilon = 0.05$ → agent khai thác kiến thức đã học
+        \item Giảm trong 100.000 bước đầu của 200.000 bước huấn luyện
+    \end{itemize}
+\end{itemize}
+\end{frame}

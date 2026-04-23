@@ -1,0 +1,133 @@
+% ============================================================
+%  slide_ch1.tex — Chương I: Mở đầu
+%  5 frames
+% ============================================================
+\section{Chương I: Mở đầu}
+
+% ------ Frame 1: Bối cảnh ------
+\begin{frame}{Bối cảnh: Giao thông đô thị Việt Nam}
+  \begin{columns}[T]
+    \column{0.56\textwidth}
+    \begin{itemize}
+      \item Ùn tắc giao thông gây thiệt hại \alert{hàng tỷ đồng/ngày} tại Hà Nội và TP.HCM
+      \vspace{4pt}
+      \item Hệ thống đèn hiện tại: \textbf{Fixed-Time Control}
+        \begin{itemize}
+          \item Chu kỳ đèn cố định, không thay đổi
+          \item Không phản ứng theo lưu lượng thực tế
+          \item Lãng phí thời gian xanh khi đường vắng
+        \end{itemize}
+      \vspace{4pt}
+      \item Đặc thù riêng của VN: xe máy chiếm \alert{60--70\%} tổng lưu lượng
+    \end{itemize}
+
+    \column{0.40\textwidth}
+    \begin{block}{Phân bố phương tiện VN}
+      \begin{center}
+      \begin{tabular}{lc}
+        \toprule
+        \textbf{Loại xe} & \textbf{Tỉ lệ}\\
+        \midrule
+        Xe máy     & $\sim$60\%\\
+        Ô tô       & $\sim$30\%\\
+        Xe buýt    & $\sim$5\%\\
+        Xe tải     & $\sim$5\%\\
+        \bottomrule
+      \end{tabular}
+      \end{center}
+    \end{block}
+    \vspace{6pt}
+    \begin{alertblock}{}
+      \centering Chưa có nghiên cứu DRL\\ phù hợp đặc thù VN!
+    \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 2: Vấn đề & Giải pháp ------
+\begin{frame}{Vấn đề và Hướng tiếp cận}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{alertblock}{Vấn đề với Fixed-Time}
+      \begin{itemize}
+        \item Không nhận biết lưu lượng thực tế
+        \item Chu kỳ cứng nhắc, không thích ứng
+        \item Thiết kế theo kinh nghiệm, không tối ưu
+        \item Nghiên cứu DRL hiện có chủ yếu cho giao thông Châu Âu / Bắc Mỹ
+      \end{itemize}
+    \end{alertblock}
+
+    \column{0.48\textwidth}
+    \begin{exampleblock}{Giải pháp: Deep RL (DQN)}
+      \begin{itemize}
+        \item Agent \textbf{tự học} từ dữ liệu mô phỏng
+        \item Thích ứng pha đèn theo thời gian thực
+        \item Không cần biết mô hình giao thông tường minh
+        \item Tích hợp đặc thù VN (PCU xe máy, phân bố phương tiện)
+      \end{itemize}
+    \end{exampleblock}
+  \end{columns}
+
+  \vspace{10pt}
+  \begin{center}
+    \begin{tikzpicture}
+      \node[draw, fill=vnred!20, rounded corners, minimum width=3cm, minimum height=0.55cm] (ft)
+        at (0,0) {\small Fixed-Time: chu kỳ cố định};
+      \node[draw, fill=techgreen!25, rounded corners, minimum width=3cm, minimum height=0.55cm] (dqn)
+        at (6,0) {\small DQN Agent: thích ứng thực tế};
+      \draw[->, thick, vnblue, line width=1.5pt] (ft) -- node[above]{\small\textbf{Thay thế bằng}} (dqn);
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% ------ Frame 3: Mục tiêu ------
+\begin{frame}{Mục tiêu dự án}
+  \begin{enumerate}
+    \setlength{\itemsep}{8pt}
+    \item \textbf{Xây dựng môi trường mô phỏng} ngã tư Hà Nội bằng \textbf{SUMO}, tích hợp phân bố xe và hệ số PCU Việt Nam
+
+    \item \textbf{Mô hình hóa bài toán} điều khiển đèn dưới dạng\\
+          \textbf{Mô hình Quyết định Markov (MDP)} --- xác định rõ State, Action, Reward
+
+    \item \textbf{Triển khai Double DQN + Dueling Network} để huấn luyện agent điều khiển đèn tự thích ứng theo lưu lượng thực tế
+
+    \item \textbf{Đánh giá định lượng} DQN so với Fixed-Time 160s qua 5 chỉ số:\\
+          hàng đợi, thời gian chờ, tốc độ, throughput, tổng reward
+  \end{enumerate}
+\end{frame}
+
+% ------ Frame 4: Phạm vi & Cấu trúc ------
+\begin{frame}{Phạm vi nghiên cứu và Cấu trúc báo cáo}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \begin{block}{Phạm vi nghiên cứu}
+      \begin{itemize}
+        \item \textbf{Đối tượng}: Ngã tư 4 hướng, đô thị VN
+        \item \textbf{Công cụ}: SUMO + TraCI API
+        \item \textbf{Ngôn ngữ}: Python 3.9+ / PyTorch 2.2+
+        \item \textbf{Kịch bản}: Hà Nội mẫu\\
+              lưu lượng EW:NS = 2:1
+        \item \textbf{Thời gian}: 1 giờ / episode
+        \item \textbf{Huấn luyện}: 200.000 bước
+      \end{itemize}
+    \end{block}
+
+    \column{0.46\textwidth}
+    \begin{block}{Cấu trúc báo cáo}
+      \begin{tabular}{ll}
+        \textbf{Ch. I}   & Mở đầu \\[2pt]
+        \textbf{Ch. II}  & Cơ sở lý thuyết \\[2pt]
+        \textbf{Ch. III} & Phương pháp đề xuất \\[2pt]
+        \textbf{Ch. IV}  & Thực nghiệm \& Đánh giá \\[2pt]
+        \textbf{Ch. V}   & Kết luận \\
+      \end{tabular}
+    \end{block}
+
+    \vspace{8pt}
+    \begin{exampleblock}{Kết quả nổi bật}
+      \centering
+      $\downarrow$\textbf{51.6\%} hàng đợi\\
+      $\downarrow$\textbf{74.8\%} thời gian chờ\\
+      $\uparrow$\textbf{16.0\%} tốc độ lưu thông
+    \end{exampleblock}
+  \end{columns}
+\end{frame}

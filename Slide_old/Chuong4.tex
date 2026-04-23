@@ -1,0 +1,151 @@
+% =========================================
+% PHẦN 4: Deep Q-Network (DQN) & Các cơ chế nâng cao
+% — Không nhắc về Q-Learning truyền thống —
+% =========================================
+
+\begin{frame}
+  \centering
+  \Huge \textbf{PHẦN 4} \\[0.5cm]
+  \LARGE Deep Q-Network (DQN) \& Các cơ chế nâng cao
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Deep Q-Network (DQN)}
+\begin{itemize}
+    \item DQN sử dụng \textbf{mạng nơ-ron sâu} để xấp xỉ hàm giá trị hành động:
+    \[
+    Q(s, a) \approx Q(s, a;\, \theta)
+    \]
+    \item Nhận đầu vào là vector trạng thái $s \in \mathbb{R}^{32}$, đầu ra là giá trị Q cho tất cả 4 hành động.
+    \item Cho phép xử lý không gian trạng thái \textbf{liên tục và nhiều chiều} — phù hợp bài toán giao thông thực tế.
+    \item \textbf{Hàm mất mát} (Huber Loss / Smooth L1):
+    \[
+    \mathcal{L}(\theta) = \mathbb{E}_{(s,a,r,s') \sim \mathcal{B}}\!\left[\text{SmoothL1}\!\left(Q(s,a;\theta) - y\right)\right]
+    \]
+    \begin{itemize}
+        \item Ít nhạy cảm với giá trị ngoại lai (outlier) hơn MSE
+        \item Kết hợp \textbf{gradient clipping} (max\_norm = 10) để ổn định huấn luyện
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Kiến trúc Dueling DQN}
+\begin{itemize}
+    \item \textbf{Backbone} (2 lớp ẩn, mỗi lớp 128 neuron với LayerNorm + ReLU):
+    \[
+    \text{Input}(32) \xrightarrow{FC+LN+ReLU} 128 \xrightarrow{FC+LN+ReLU} 128
+    \]
+    \item Sau backbone, mạng tách thành \textbf{hai nhánh song song}:
+    \begin{itemize}
+        \item \textbf{Value stream} $V(s;\theta_v)$: ước lượng giá trị trạng thái $s$ bất kể hành động nào
+        \item \textbf{Advantage stream} $A(s,a;\theta_a)$: ước lượng lợi thế tương đối của từng hành động
+    \end{itemize}
+    \item \textbf{Kết hợp:}
+    \[
+    Q(s,a;\theta) = V(s;\theta_v) + \left[A(s,a;\theta_a) - \frac{1}{|A|}\sum_{a'} A(s,a';\theta_a)\right]
+    \]
+    \item \textbf{Ưu điểm:} Học giá trị trạng thái $V(s)$ hiệu quả hơn — đặc biệt hữu ích khi nhiều hành động có hiệu quả tương đương trong điều kiện giao thông ổn định.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Experience Replay}
+\begin{itemize}
+    \item Các trải nghiệm $(s, a, r, s', d)$ được lưu vào \textbf{replay buffer} (dung lượng 100.000 transitions).
+    \item Huấn luyện bằng cách \textbf{lấy mẫu ngẫu nhiên} minibatch (64 mẫu) từ buffer thay vì học trực tiếp từ dữ liệu liên tiếp.
+    \item \textbf{Hai lợi ích chính:}
+    \begin{itemize}
+        \item \textbf{Phá vỡ tương quan:} Dữ liệu liên tiếp trong RL thường tương quan cao, gây mất ổn định. Lấy mẫu ngẫu nhiên loại bỏ tương quan này.
+        \item \textbf{Tái sử dụng kinh nghiệm:} Mỗi transition có thể được học nhiều lần, tăng hiệu quả sử dụng dữ liệu.
+    \end{itemize}
+    \item Huấn luyện bắt đầu sau khi buffer tích lũy đủ \textbf{10.000 transitions} đầu tiên.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Double DQN — Khắc phục Overestimation Bias}
+\begin{itemize}
+    \item DQN chuẩn có xu hướng \textbf{ước lượng quá cao} (overestimate) giá trị Q do cùng một mạng vừa chọn hành động vừa đánh giá giá trị của hành động đó.
+    \item \textbf{Double DQN} giải quyết bằng cách tách biệt hai vai trò:
+    \begin{itemize}
+        \item \textbf{Mạng online} $Q(\cdot;\theta)$: chọn hành động tốt nhất tại $s'$
+        \item \textbf{Mạng target} $Q(\cdot;\theta^-)$: đánh giá giá trị của hành động được chọn
+    \end{itemize}
+    \[
+    a^* = \arg\max_{a'} Q(s', a';\, \theta)
+    \]
+    \[
+    y = r + \gamma\, Q(s', a^*;\, \theta^-)
+    \]
+    \item \textbf{Kết quả:} Ước lượng Q chính xác hơn → chính sách học ổn định và tốt hơn.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Target Network}
+\begin{itemize}
+    \item Sử dụng \textbf{mạng target} $Q(s,a;\theta^-)$ tách biệt với mạng online $Q(s,a;\theta)$.
+    \item Mạng target được dùng để tính TD target, giữ nguyên trong $N$ bước:
+    \[
+    y = r + \gamma\, Q(s', a^*;\, \theta^-)
+    \]
+    \item \textbf{Hard update} mỗi \textbf{2.000 bước}: sao chép toàn bộ tham số
+    \[
+    \theta^- \leftarrow \theta
+    \]
+    \item \textbf{Tác dụng:} Tránh "moving target problem" — mục tiêu học tập không bị dao động theo từng bước cập nhật → ổn định hội tụ.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Vòng lặp huấn luyện}
+\begin{enumerate}
+    \item Khởi tạo: SUMO Env, DQN Agent, ReplayBuffer (100K), LinearEpsilon
+    \item Lặp trong $T = 200.000$ bước:
+    \begin{enumerate}
+        \item Tính $\epsilon_t$ theo lịch giảm tuyến tính
+        \item Agent chọn $a_t$ theo $\epsilon$-greedy từ trạng thái $s_t$
+        \item Kiểm tra ràng buộc per-phase → áp pha vào SUMO
+        \item SUMO tiến 5 bước giây → nhận $(r_t,\, s_{t+1},\, \text{done})$
+        \item Lưu transition $(s_t, a_t, r_t, s_{t+1}, d)$ vào buffer
+        \item Nếu buffer $\geq$ 10K: sample 64 mẫu → update $\theta$ (Adam + Huber Loss)
+        \item Mỗi 2.000 bước: hard copy $\theta^- \leftarrow \theta$
+        \item Nếu done (3.600s): reset SUMO, lưu model tốt nhất nếu reward cải thiện
+    \end{enumerate}
+    \item Lưu: \texttt{dqn\_vn\_tls.pt} (model cuối) và \texttt{dqn\_vn\_tls\_best.pt}
+\end{enumerate}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Cấu hình huấn luyện}
+\begin{columns}
+\column{0.50\textwidth}
+\textbf{Hyperparameter:}
+\begin{itemize}
+    \item Tổng bước huấn luyện: 200.000
+    \item Bắt đầu train: 10.000 bước
+    \item Replay buffer: 100.000
+    \item Batch size: 64
+    \item $\gamma = 0.99$
+    \item Learning rate (Adam): 0.0005
+    \item Target update: mỗi 2.000 bước
+    \item Gradient clipping: max\_norm = 10
+    \item $\epsilon$: 1.0 → 0.05 trong 100K bước
+\end{itemize}
+
+\column{0.46\textwidth}
+\textbf{Baseline so sánh:}
+\begin{itemize}
+    \item Fixed-Time 160s bất đối xứng:
+    \begin{itemize}
+        \item EW xanh: 100s
+        \item EW vàng: 5s
+        \item NS xanh: 50s
+        \item NS vàng: 5s
+    \end{itemize}
+    \item Phản ánh đúng tỉ lệ lưu lượng EW:NS = 2:1
+    \item Không thích ứng với thực tế
+\end{itemize}
+\end{columns}
+\end{frame}

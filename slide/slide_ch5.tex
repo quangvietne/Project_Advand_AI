@@ -1,0 +1,112 @@
+% ============================================================
+%  slide_ch5.tex — Chương V: Kết luận
+%  5 frames (kể cả slide cảm ơn)
+% ============================================================
+\section{Chương V: Kết luận}
+
+% ------ Frame 1: Tổng kết kết quả ------
+\begin{frame}{Tổng kết kết quả}
+  \begin{block}{Đề tài đã thực hiện thành công}
+    Mô hình hóa điều khiển đèn tín hiệu ngã tư Hà Nội dưới dạng MDP, triển khai \textbf{Double DQN + Dueling Network} trong môi trường SUMO với đặc thù giao thông Việt Nam
+  \end{block}
+  \vspace{8pt}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{alertblock}{Giảm thiểu ùn tắc}
+      \begin{itemize}
+        \item \alert{$\downarrow$ \textbf{51.6\%}} Hàng đợi TB\\
+              (16.05 vs 33.13 xe/làn)
+        \item \alert{$\downarrow$ \textbf{74.8\%}} Thời gian chờ\\
+              (30.55 vs 121.35 s/bước)
+        \item \alert{$\downarrow$ \textbf{22.7\%}} Hàng đợi cực đại\\
+              (51 vs 66 xe)
+        \item \alert{$\downarrow$ \textbf{36.1\%}} Độ lệch chuẩn\\
+              (8.16 vs 12.77) --- ổn định hơn
+      \end{itemize}
+    \end{alertblock}
+
+    \column{0.48\textwidth}
+    \begin{exampleblock}{Cải thiện hiệu quả lưu thông}
+      \begin{itemize}
+        \item \textcolor{techgreen}{$\uparrow$ \textbf{16.0\%}} Tốc độ lưu thông\\
+              (5.65 vs 4.87 m/s)
+        \item \textcolor{techgreen}{$\uparrow$ \textbf{1.8\%}} Throughput\\
+              (344 vs 338 xe/episode)
+        \item \textcolor{techgreen}{$\uparrow$ \textbf{58.5\%}} Tổng Reward\\
+              ($-$14.754 vs $-$35.512)
+      \end{itemize}
+    \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 2: Ưu điểm ------
+\begin{frame}{Ưu điểm của phương pháp đề xuất}
+  \begin{itemize}
+    \setlength{\itemsep}{8pt}
+    \item \textbf{Thích ứng theo thời gian thực}\\
+          Agent quan sát trạng thái giao thông liên tục và điều chỉnh pha đèn theo lưu lượng thực tế --- không bị ràng buộc bởi lịch cố định
+
+    \item \textbf{Không cần mô hình vật lý tường minh}\\
+          Học trực tiếp từ tương tác với SUMO mà không cần biết hàm chuyển trạng thái $P(s'|s,a)$ --- lợi thế lớn so với điều khiển tối ưu truyền thống
+
+    \item \textbf{Thiết kế riêng cho Việt Nam}\\
+          Hệ số PCU xe máy (0.5), tỷ lệ phân bố 60\% xe máy, direction weight và ràng buộc per-phase phản ánh đặc thù giao thông VN
+
+    \item \textbf{Khả năng mở rộng cao}\\
+          Kiến trúc và thuật toán sẵn sàng nâng cấp lên multi-intersection, multi-agent (MARL) và tích hợp dữ liệu cảm biến thực
+  \end{itemize}
+\end{frame}
+
+% ------ Frame 3: Hạn chế & Hướng phát triển ------
+\begin{frame}{Hạn chế và Hướng phát triển tương lai}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{alertblock}{Hạn chế hiện tại}
+      \begin{itemize}
+        \setlength{\itemsep}{4pt}
+        \item \textbf{Phạm vi hẹp}: 1 ngã tư đơn, lưu lượng theo xác suất cố định
+        \item \textbf{Chưa dữ liệu thực}: sim-to-real gap chưa được đánh giá
+        \item \textbf{Throughput}: chỉ cải thiện 1.8\% --- cần tối ưu hơn
+        \item \textbf{Huấn luyện}: 30--60 phút, chưa phù hợp online / thời gian thực
+        \item \textbf{State chưa chuẩn hóa}: queue, speed, wait có đơn vị rất khác nhau
+      \end{itemize}
+    \end{alertblock}
+
+    \column{0.48\textwidth}
+    \begin{exampleblock}{Hướng phát triển}
+      \begin{itemize}
+        \setlength{\itemsep}{4pt}
+        \item \textbf{MARL}: điều phối đồng thời nhiều nút giao thông
+        \item \textbf{Transfer Learning}: tái sử dụng \texttt{dqn\_vn\_tls.pt} cho kịch bản mới
+        \item \textbf{Dữ liệu thực}: tích hợp camera/cảm biến tại nút giao HN
+        \item \textbf{Reward nâng cao}: thêm khí thải, nhiên liệu, mức độ an toàn
+        \item \textbf{Edge Deployment}: nén model (pruning, quantization) cho phần cứng nhúng tại cột đèn
+      \end{itemize}
+    \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 4: Slide cảm ơn ------
+\begin{frame}{}
+  \vfill
+  \begin{center}
+    \begin{beamercolorbox}[sep=16pt, center, rounded=true, shadow=true]{frametitle}
+      {\Huge \textbf{Cảm ơn thầy/cô và các bạn!}}
+    \end{beamercolorbox}
+
+    \vspace{20pt}
+
+    \begin{beamercolorbox}[sep=10pt, center, rounded=true]{block body}
+      \begin{tabular}{rl}
+        \textbf{Đề tài:}    & Tối ưu hóa điều khiển đèn dựa trên MDP\\[4pt]
+        \textbf{Thuật toán:}& Double DQN + Dueling Network\\[4pt]
+        \textbf{Công cụ:}   & Python / PyTorch / SUMO\\[4pt]
+        \textbf{Kết quả:}   & $\downarrow$51.6\% hàng đợi \quad $\downarrow$74.8\% chờ \quad $\uparrow$16.0\% tốc độ\\
+      \end{tabular}
+    \end{beamercolorbox}
+
+    \vspace{16pt}
+    {\large \textbf{Q\&A}}
+  \end{center}
+  \vfill
+\end{frame}

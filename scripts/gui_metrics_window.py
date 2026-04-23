@@ -268,16 +268,26 @@ def run_simulation_with_gui_metrics(mode='dqn', num_steps=720):
     total_vehicles = 0
     max_queue = 0
     
-    # Create environment config
+    # Create environment config (đọc đầy đủ từ config.yaml, khớp với train.py)
+    _action_dur = config['sumo'].get('action_duration', 5)
     env_config = EnvConfig(
         sumocfg_path=config['sumo']['sumocfg_path'],
         tls_id=config['sumo']['tls_id'],
         phases=config['sumo']['phases'],
         max_steps=num_steps,
-        action_duration=config['sumo'].get('action_duration', 5),
-        min_phase_steps=max(1, config['sumo'].get('min_phase_duration', 30) // config['sumo'].get('action_duration', 5)),
-        max_phase_steps=max(2, config['sumo'].get('max_phase_duration', 120) // config['sumo'].get('action_duration', 5)),
-        gui=True
+        action_duration=_action_dur,
+        min_phase_steps=max(1, config['sumo'].get('min_phase_duration', 5) // _action_dur),
+        max_phase_steps=max(2, config['sumo'].get('max_phase_duration', 140) // _action_dur),
+        warmup_steps=config['sumo'].get('warmup_steps', 0),
+        gui=True,
+        phase_green_min={
+            int(k): max(1, v // _action_dur)
+            for k, v in config['sumo'].get('phase_green_min', {}).items()
+        },
+        phase_green_max={
+            int(k): max(1, v // _action_dur)
+            for k, v in config['sumo'].get('phase_green_max', {}).items()
+        },
     )
     
     # Create environment
@@ -305,9 +315,16 @@ def run_simulation_with_gui_metrics(mode='dqn', num_steps=720):
         agent.q.eval()
         print(f"✓ Loaded DQN model from {model_path}")
     else:
-        controller_config = FixedTimeConfig(green_duration=55, yellow_duration=5)
+        # Dùng 160s schedule bất đối xứng (EW:NS = 2:1) từ config, khớp với báo cáo
+        _ft_schedule = config['sumo'].get(
+            'fixed_time_phase_schedule', [(2, 100), (3, 5), (0, 50), (1, 5)]
+        )
+        controller_config = FixedTimeConfig(
+            phase_schedule=[tuple(p) for p in _ft_schedule],
+            action_duration=_action_dur,
+        )
         controller = FixedTimeController(controller_config)
-        print("✓ Using Fixed-Time controller")
+        print("✓ Using Fixed-Time controller (160s schedule)")
     
     # Run simulation in separate thread
     def run_simulation():

@@ -1,0 +1,353 @@
+% ============================================================
+%  slide_ch3.tex — Chương III: Phương pháp đề xuất
+%  9 frames
+% ============================================================
+\section{Chương III: Phương pháp đề xuất}
+
+% ------ Frame 1: Tổng quan hệ thống ------
+\begin{frame}{Tổng quan hệ thống}
+  \begin{center}
+  \begin{tikzpicture}[scale=0.88, font=\small,
+    lyr/.style={draw, rounded corners, minimum width=4.5cm, minimum height=0.75cm, align=center}]
+
+    \node[lyr, fill=techgreen!30] (sumo) at (0,3.5) {\textbf{Lớp 1: Môi trường SUMO}};
+    \node[lyr, fill=vnblue!25]    (mdp)  at (0,2.2) {\textbf{Lớp 2: Ánh xạ MDP}};
+    \node[lyr, fill=softorange!30](dqn)  at (0,0.9) {\textbf{Lớp 3: DQN Agent}};
+
+    \node[right, align=left, font=\scriptsize] at (2.5,3.5) {Mô phỏng ngã tư, luồng xe\\TraCI API (setPhase, simulationStep, getLane*)};
+    \node[right, align=left, font=\scriptsize] at (2.5,2.2) {State $s_t\in\mathbb{R}^{32}$, Action $a_t\in\{0,1,2,3\}$\\Reward $R_t = -(Q_t + W_t/60)$};
+    \node[right, align=left, font=\scriptsize] at (2.5,0.9) {Double DQN + Dueling Network\\Replay Buffer, $\varepsilon$-Greedy};
+
+    \draw[<->, thick, vnblue] (sumo) -- (mdp);
+    \draw[<->, thick, vnblue] (mdp)  -- (dqn);
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  \begin{block}{Vòng lặp tổng quát (mỗi bước 5 giây mô phỏng)}
+    \centering
+    $s_t \;\xrightarrow{\varepsilon\text{-greedy}}\; a_t \;\xrightarrow{\text{SUMO 5s}}\; (r_t,\, s_{t+1}) \;\xrightarrow{\text{buffer}}\; \text{update}(\theta)$
+  \end{block}
+\end{frame}
+
+% ------ Frame 2: Môi trường SUMO ------
+\begin{frame}{Môi trường mô phỏng SUMO + TraCI}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+    \begin{block}{Kịch bản ngã tư Hà Nội mẫu}
+      \begin{itemize}
+        \item Nút trung tâm \texttt{c}, 4 hướng: N, S, E, W
+        \item Mỗi hướng: \textbf{2 làn vào + 2 làn ra}
+        \item Tốc độ tối đa: 50 km/h
+        \item Thời gian: \textbf{3600 giây / episode} (1 giờ)
+        \item Warmup: 60 giây không can thiệp
+        \item[$\Rightarrow$] 8 làn điều khiển, state 32 chiều
+      \end{itemize}
+    \end{block}
+    \vspace{6pt}
+    \begin{block}{TraCI API sử dụng}
+      \begin{tabular}{@{}ll}
+        \texttt{setPhase()} & Áp pha đèn\\
+        \texttt{simulationStep()} & Tiến bước\\
+        \texttt{getLastStepHaltingNumber()} & Hàng đợi\\
+        \texttt{getWaitingTime()} & Thời gian chờ\\
+        \texttt{getLastStepMeanSpeed()} & Tốc độ TB\\
+      \end{tabular}
+    \end{block}
+
+    \column{0.44\textwidth}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.8, font=\small]
+      % Intersection
+      \fill[gray!20] (-0.7,-0.7) rectangle (0.7,0.7);
+      \node at (0,0) {\tiny \textbf{c}};
+      % Roads
+      \fill[gray!30] (-2.5,-0.3) rectangle (-0.7,0.3);
+      \fill[gray!30] (0.7,-0.3) rectangle (2.5,0.3);
+      \fill[gray!30] (-0.3,-2.5) rectangle (0.3,-0.7);
+      \fill[gray!30] (-0.3,0.7) rectangle (0.3,2.5);
+      % Labels
+      \node at (0,2.2) {\small N};
+      \node at (0,-2.2) {\small S};
+      \node at (2.2,0) {\small E};
+      \node at (-2.2,0) {\small W};
+      % Arrows EW (main axis)
+      \draw[->, thick, vnred] (-2.4,0.12) -- (-0.9,0.12);
+      \draw[->, thick, vnred] (0.9,-0.12) -- (2.4,-0.12);
+      % Arrows NS (secondary)
+      \draw[->, thick, vnblue] (-0.12,0.9) -- (-0.12,2.4);
+      \draw[->, thick, vnblue] (0.12,-2.4) -- (0.12,-0.9);
+      % Legend
+      \node[font=\scriptsize, vnred] at (0,-3) {EW (chính, 2:1)};
+      \node[font=\scriptsize, vnblue] at (0,-3.5) {NS (phụ)};
+    \end{tikzpicture}
+    \end{center}
+    \vspace{4pt}
+    \begin{exampleblock}{}
+      \centering Lưu lượng EW:NS = \textbf{2:1}\\
+      EW = 0.50 xe/s, NS = 0.25 xe/s
+    \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 3: Phân bố phương tiện VN ------
+\begin{frame}{Phân bố phương tiện đặc trưng Việt Nam}
+  \begin{center}
+  \begin{tabular}{lcccc}
+    \toprule
+    \textbf{Loại xe} & \textbf{Tỉ lệ (\%)} & \textbf{Chiều dài (m)} & \textbf{Vmax (m/s)} & \textbf{Hệ số PCU}\\
+    \midrule
+    Xe máy (motorcycle) & $\sim$60 & 2.0 & 16.67 & \textbf{0.5}\\
+    Ô tô (car)          & $\sim$30 & 5.0 & 13.89 & \textbf{1.5}\\
+    Xe buýt (bus)       & $\sim$5  & 12.0 & 11.11 & \textbf{2.0}\\
+    Xe tải (truck)      & $\sim$5  & 7.5  & 11.11 & \textbf{2.0}\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \vspace{8pt}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \begin{exampleblock}{Hệ số PCU Việt Nam}
+      1 ô tô $\approx$ \textbf{3 xe máy} về chiếm dụng diện tích\\[4pt]
+      Sử dụng trong tính toán \textbf{state} và \textbf{reward} để agent nhận thức đúng tải trọng thực tế từng loại xe
+    \end{exampleblock}
+
+    \column{0.46\textwidth}
+    \begin{block}{Tại sao PCU quan trọng?}
+      \begin{itemize}
+        \item Xe máy chiếm 60\% nhưng PCU thấp (0.5)
+        \item Ô tô ít hơn nhưng tác động gấp 3 lần
+        \item Weighted count $c_i$ phản ánh đúng năng lực thông hành thực tế
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 4: State Space ------
+\begin{frame}{Không gian trạng thái (State Space)}
+  \begin{block}{}
+    \centering $s_t \in \mathbb{R}^{32}$ \quad (8 làn $\times$ 4 đặc trưng / làn)
+  \end{block}
+  \vspace{6pt}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \textbf{4 đặc trưng cho mỗi làn $i$:}
+    \vspace{4pt}
+    \begin{tabular}{@{}cll}
+      \toprule
+      \textbf{Ký hiệu} & \textbf{Đặc trưng} & \textbf{Đơn vị}\\
+      \midrule
+      $q_i$ & Số xe dừng (queue) & xe\\
+      $v_i$ & Tốc độ trung bình & m/s\\
+      $w_i$ & Thời gian chờ tích lũy & giây\\
+      $c_i$ & Số xe quy đổi PCU & PCU\\
+      \bottomrule
+    \end{tabular}
+
+    \vspace{8pt}
+    \textbf{Trọng số PCU:}
+    \[c_i = \sum_{v\in\text{lane}_i}\begin{cases}0.5 & \text{xe máy}\\1.5 & \text{ô tô}\\2.0 & \text{buýt/tải}\end{cases}\]
+
+    \column{0.46\textwidth}
+    \begin{alertblock}{Direction Weight --- Đặc thù VN}
+      $q_i,\; w_i,\; c_i$ nhân thêm \textbf{trọng số hướng}:\\[4pt]
+      $\text{feat}_i = \text{raw}_i \times w_{\text{direction}}$\\[4pt]
+      \begin{itemize}
+        \item Làn EW (trục chính) → $w > 1$
+        \item Làn NS (trục phụ) → $w = 1$
+        \item Agent ``thấy'' hàng EW nặng hơn → tự học ưu tiên xả EW
+      \end{itemize}
+    \end{alertblock}
+    \vspace{4pt}
+    \textit{Tốc độ $v_i$ \textbf{không} nhân direction weight} (tốc độ là thông tin khách quan của từng làn)
+  \end{columns}
+\end{frame}
+
+% ------ Frame 5: Action Space ------
+\begin{frame}{Không gian hành động (Action Space)}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+    \begin{block}{4 hành động rời rạc}
+      \begin{center}
+      \begin{tabular}{clp{4.5cm}}
+        \toprule
+        \textbf{$a$} & \textbf{Pha} & \textbf{Mô tả}\\
+        \midrule
+        $a_0$ & Pha 0 & Bắc--Nam \textcolor{techgreen}{\textbf{xanh}}\\
+        $a_1$ & Pha 1 & Bắc--Nam \textcolor{softorange}{\textbf{vàng}}\\
+        $a_2$ & Pha 2 & Đông--Tây \textcolor{techgreen}{\textbf{xanh}}\\
+        $a_3$ & Pha 3 & Đông--Tây \textcolor{softorange}{\textbf{vàng}}\\
+        \bottomrule
+      \end{tabular}
+      \end{center}
+    \end{block}
+
+    \vspace{6pt}
+    \textbf{Mỗi quyết định giữ trong \alert{5 giây}:}
+    \begin{enumerate}
+      \item Agent chọn pha $a_t$
+      \item SUMO tiến \texttt{simulationStep()} × 5
+      \item Thu thập metrics → tính reward
+      \item Agent nhận $s_{t+1}$, ra quyết định $a_{t+1}$
+    \end{enumerate}
+
+    \column{0.44\textwidth}
+    \begin{exampleblock}{Ràng buộc an toàn (per-phase)}
+      \begin{itemize}
+        \item Không thể chuyển pha bất kỳ lúc nào
+        \item Cần ràng buộc $t_{\min}$/$t_{\max}$ riêng cho từng pha
+        \item Phản ánh thực tế giao thông an toàn
+      \end{itemize}
+    \end{exampleblock}
+    \vspace{6pt}
+    \begin{alertblock}{Không gian hành động nhỏ}
+      4 hành động rời rạc\\
+      $\Rightarrow$ Phù hợp DQN\\
+      (không cần policy gradient)
+    \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 6: Reward Function ------
+\begin{frame}{Hàm phần thưởng (Reward Function)}
+  \begin{block}{Công thức reward}
+    \[R_t = -\!\underbrace{\left(Q_t + \dfrac{W_t}{60}\right)}_{\text{phạt ùn tắc}} + \underbrace{\text{penalty}}_{\text{phạt chuyển sớm}}\]
+  \end{block}
+  \vspace{6pt}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \begin{itemize}
+      \item \textbf{$Q_t$}: Tổng xe dừng (có nhân direction weight)\\
+            $Q_t = \sum_{i=1}^{8} q_i^{(t)} \cdot w_i$
+      \vspace{4pt}
+      \item \textbf{$W_t/60$}: Tổng thời gian chờ chia 60\\
+            (chuẩn hóa cùng đơn vị với $Q_t$)
+      \vspace{4pt}
+      \item \textbf{penalty} $= -1.0$ nếu agent cố chuyển pha trước khi hết $t_{\min}$
+    \end{itemize}
+    \vspace{4pt}
+    \begin{exampleblock}{}
+      $R_t$ luôn \alert{âm} — gần 0 = giao thông thông thoáng
+    \end{exampleblock}
+
+    \column{0.46\textwidth}
+    \begin{block}{Mục tiêu tối ưu hóa}
+      \[\max_\pi\;\mathbb{E}\!\left[\sum_{t=0}^{T}\gamma^t R_t\right] \equiv \min\;\text{ùn tắc}\]
+      \begin{itemize}
+        \item $\gamma = 0.99$: coi trọng dài hạn
+        \item Không cần reward dương: agent học bằng cách \textit{so sánh} các mức âm
+        \item Phạt penalty $-1.0$ khuyến khích agent học tính kiên nhẫn
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 7: Ràng buộc per-phase ------
+\begin{frame}{Ràng buộc an toàn Per-Phase}
+  \begin{center}
+  \begin{tabular}{lccccc}
+    \toprule
+    \textbf{Pha} & \textbf{Trục} & $t_{\min}$ (s) & $t_{\min}$ (bước) & $t_{\max}$ (s) & $t_{\max}$ (bước)\\
+    \midrule
+    Pha 2 (EW xanh) & Đông--Tây (chính) & \textbf{60} & 12 & \textbf{140} & 28\\
+    Pha 0 (NS xanh) & Bắc--Nam (phụ)    & \textbf{30} & 6  & \textbf{70}  & 14\\
+    Pha 1, 3 (vàng) & ---               & \multicolumn{2}{c}{global (5s)} & \multicolumn{2}{c}{global (140s)}\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \textbf{3 cơ chế thi hành:}
+    \begin{enumerate}
+      \item \textbf{Chuyển sớm hơn $t_{\min}$}:\\
+            → Bác bỏ hành động + phạt $-1.0$
+      \item \textbf{Vượt quá $t_{\max}$}:\\
+            → Bắt buộc chuyển sang pha kế tiếp
+      \item \textbf{Tích lũy bộ đếm pha}:\\
+            \texttt{current\_phase\_steps} theo dõi thời gian giữ pha
+    \end{enumerate}
+
+    \column{0.46\textwidth}
+    \begin{alertblock}{Hiệu ứng bất đối xứng có chủ ý}
+      EW: $t_{\min} = 60$s $>$ NS: $t_{\min} = 30$s\\[4pt]
+      $\Rightarrow$ Agent tự học ưu tiên trục chính, phù hợp lưu lượng 2:1\\[4pt]
+      Không cần lập trình cứng: agent học từ reward signal
+    \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 8: Kiến trúc mạng ------
+\begin{frame}{Kiến trúc mạng Deep Q-Network}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \textbf{Backbone MLP (2 lớp ẩn):}
+    \[
+      \underbrace{\text{Input}(32)}_{\text{state vector}}
+      \!\xrightarrow{FC+LN+ReLU}\!
+      128
+      \!\xrightarrow{FC+LN+ReLU}\!
+      128
+    \]
+
+    \vspace{6pt}
+    \textbf{Dueling Heads:}
+    \begin{align*}
+      V:\;&128 \xrightarrow{FC+ReLU} 128 \xrightarrow{FC} 1\\
+      A:\;&128 \xrightarrow{FC+ReLU} 128 \xrightarrow{FC} 4
+    \end{align*}
+
+    \textbf{Output:}
+    \[Q(s,a) = V + \bigl[A(s,a)-\tfrac{1}{4}{\textstyle\sum_{a'}}A(s,a')\bigr]\]
+
+    \vspace{4pt}
+    \begin{itemize}
+      \item \textbf{LayerNorm}: ổn định kích hoạt, phù hợp batch nhỏ (64)
+      \item \textbf{Kaiming Uniform}: khởi tạo chống vanishing gradient
+    \end{itemize}
+
+    \column{0.46\textwidth}
+    \begin{block}{Siêu tham số huấn luyện}
+      \begin{tabular}{@{}ll}
+        \toprule
+        \textbf{Tham số} & \textbf{Giá trị}\\
+        \midrule
+        Tổng bước        & 200.000\\
+        Bắt đầu train    & 10.000\\
+        Replay buffer    & 100.000\\
+        Batch size       & 64\\
+        $\gamma$         & 0.99\\
+        LR (Adam)        & 0.0005\\
+        Target update    & 2.000 bước\\
+        Grad clip        & 10.0\\
+        $\varepsilon$ giảm & 1.0 → 0.05 (100K)\\
+        \bottomrule
+      \end{tabular}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 9: Vòng lặp huấn luyện ------
+\begin{frame}{Vòng lặp huấn luyện}
+  \begin{enumerate}
+    \setlength{\itemsep}{3pt}
+    \item \textbf{Khởi tạo}: SUMO Env, DQN Agent, ReplayBuffer (100K), LinearEpsilon
+    \vspace{4pt}
+    \item \textbf{Lặp $T = 200.000$ bước:}
+      \begin{enumerate}
+        \setlength{\itemsep}{2pt}
+        \item[2.1] Tính $\varepsilon_t$: giảm tuyến tính 1.0 → 0.05 trong 100K bước đầu
+        \item[2.2] Agent chọn $a_t$ theo $\varepsilon$-greedy từ $s_t$
+        \item[2.3] Kiểm tra ràng buộc per-phase ($t_{\min}$/$t_{\max}$) → áp pha vào SUMO
+        \item[2.4] SUMO tiến 5 bước giây → nhận $(r_t, s_{t+1}, \text{done})$
+        \item[2.5] Lưu transition $(s_t, a_t, r_t, s_{t+1}, d)$ vào buffer
+        \item[2.6] Nếu buffer $\geq 10$K: sample 64 mẫu → update $\theta$ (Adam + Huber Loss)
+        \item[2.7] Mỗi 2.000 bước: hard copy $\theta^- \leftarrow \theta$
+        \item[2.8] Nếu done (3.600s): reset SUMO, lưu \texttt{\_best.pt} nếu reward mới cao hơn
+      \end{enumerate}
+    \vspace{4pt}
+    \item \textbf{Lưu}: \texttt{dqn\_vn\_tls.pt} (model cuối) $+$ \texttt{dqn\_vn\_tls\_best.pt} (model tốt nhất)
+  \end{enumerate}
+\end{frame}

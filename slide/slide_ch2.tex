@@ -1,0 +1,302 @@
+% ============================================================
+%  slide_ch2.tex — Chương II: Cơ sở lý thuyết
+%  8 frames
+% ============================================================
+\section{Chương II: Cơ sở lý thuyết}
+
+% ------ Frame 1: MDP Định nghĩa ------
+\begin{frame}{Mô hình Quyết định Markov (MDP)}
+  \begin{block}{Định nghĩa: $\mathcal{M} = (S,\; A,\; P,\; R,\; \gamma)$}
+  \end{block}
+  \vspace{4pt}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+    \begin{tabular}{@{}lp{5.5cm}}
+      $S$ & \textbf{Không gian trạng thái} --- tập trạng thái môi trường \\[4pt]
+      $A$ & \textbf{Không gian hành động} --- tập quyết định của agent \\[4pt]
+      $P(s'|s,a)$ & \textbf{Hàm chuyển trạng thái} --- xác suất chuyển \\[4pt]
+      $R(s,a)$ & \textbf{Hàm phần thưởng} --- tín hiệu phản hồi \\[4pt]
+      $\gamma\in(0,1]$ & \textbf{Hệ số chiết khấu} --- tầm nhìn dài hạn \\
+    \end{tabular}
+
+    \column{0.44\textwidth}
+    \begin{alertblock}{Tính chất Markov}
+      \[P(s_{t+1}\mid s_t, a_t) = P(s_{t+1}\mid s_0,\ldots,s_t,a_t)\]
+      \centering Tương lai \textbf{chỉ phụ thuộc}\\vào trạng thái \textit{hiện tại}
+    \end{alertblock}
+    \vspace{6pt}
+    \begin{block}{Chính sách tối ưu}
+      \[\pi^* = \arg\max_\pi\; \mathbb{E}_\pi\!\left[\sum_{t=0}^{\infty}\gamma^t R_t\right]\]
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 2: Tại sao đèn giao thông là MDP ------
+\begin{frame}{Tại sao điều khiển đèn giao thông là một MDP?}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+    \begin{enumerate}
+      \setlength{\itemsep}{6pt}
+      \item \textbf{Quyết định tuần tự}\\
+            Pha đèn tại $t$ ảnh hưởng trực tiếp trạng thái $t+1$
+      \item \textbf{Tính ngẫu nhiên}\\
+            Xe đến ngẫu nhiên, không thể dự đoán chính xác $s_{t+1}$
+      \item \textbf{Tối ưu dài hạn}\\
+            Cần giảm ùn tắc bền vững trong cả 1 giờ ($\gamma=0.99$)
+      \item \textbf{Không biết mô hình vật lý}\\
+            $P(s'|s,a)$ không tường minh → phải học từ dữ liệu
+    \end{enumerate}
+
+    \column{0.44\textwidth}
+    \begin{block}{Ánh xạ bài toán $\Leftrightarrow$ MDP}
+      \begin{center}
+      \begin{tabular}{ll}
+        \toprule
+        \textbf{MDP} & \textbf{Giao thông}\\
+        \midrule
+        State $s_t$   & Hàng đợi, tốc độ\\
+        Action $a_t$  & Pha đèn (0--3)\\
+        Reward $r_t$  & $-$Mức ùn tắc\\
+        Policy $\pi$  & Chiến lược điều khiển\\
+        \bottomrule
+      \end{tabular}
+      \end{center}
+    \end{block}
+    \vspace{6pt}
+    \begin{exampleblock}{}
+      \centering$\gamma = 0.99$ → agent ưu tiên\\giảm ùn tắc dài hạn
+    \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 3: Học tăng cường ------
+\begin{frame}{Học tăng cường (Reinforcement Learning)}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+    \textbf{Vòng lặp tương tác Agent -- Môi trường:}
+    \vspace{6pt}
+
+    \begin{tikzpicture}[scale=0.9, font=\small,
+      box/.style={draw, rounded corners, minimum width=2cm, minimum height=0.7cm, fill=lightblue}]
+      \node[box, fill=vnblue!25] (agent) at (0,2) {\textbf{Agent}};
+      \node[box, fill=techgreen!25] (env)   at (4,2) {\textbf{Môi trường}};
+      \draw[->, thick, vnblue]  (agent.east) to[bend left=25]
+            node[above]{\small $a_t$ (pha đèn)} (env.west);
+      \draw[->, thick, softorange] (env.west) to[bend left=25]
+            node[below]{\small $s_{t+1},\; r_t$} (agent.east);
+    \end{tikzpicture}
+
+    \vspace{8pt}
+    \textbf{Mục tiêu:} tối đa hóa return tích lũy
+    \[G_t = \sum_{k=0}^{\infty}\gamma^k r_{t+k+1}\]
+
+    \column{0.44\textwidth}
+    \begin{block}{Đặc điểm nổi bật của RL}
+      \begin{itemize}
+        \item Không cần nhãn tường minh như Supervised Learning
+        \item Phần thưởng có thể bị trễ (delayed reward)
+        \item Tối ưu hiệu quả \textit{dài hạn}
+        \item Phù hợp bài toán điều khiển trong môi trường động
+      \end{itemize}
+    \end{block}
+    \vspace{4pt}
+    \begin{alertblock}{Thách thức}
+      Cân bằng \textbf{khai thác} (exploitation) và \textbf{khám phá} (exploration)
+    \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 4: Q-Learning & Bellman ------
+\begin{frame}{Q-Learning và Phương trình Bellman}
+  \begin{block}{Hàm giá trị hành động $Q^\pi(s,a)$}
+    \[Q^\pi(s,a) = \mathbb{E}_\pi\bigl[G_t \mid s_t=s,\; a_t=a\bigr]
+      = \mathbb{E}_\pi\!\left[\sum_{k=0}^{\infty}\gamma^k r_{t+k+1}\;\middle|\;s_t=s,\;a_t=a\right]\]
+  \end{block}
+  \vspace{6pt}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \begin{block}{Phương trình Bellman tối ưu}
+      \[Q^*(s,a) = \mathbb{E}\!\left[r + \gamma\max_{a'}Q^*(s',a')\;\middle|\;s,a\right]\]
+      \[\Rightarrow\quad\pi^*(s) = \arg\max_a Q^*(s,a)\]
+    \end{block}
+    \vspace{4pt}
+    \textbf{Q-Learning cập nhật:}
+    \[Q(s,a)\;\leftarrow\; Q(s,a)+\alpha\Bigl[r+\gamma\max_{a'}Q(s',a')-Q(s,a)\Bigr]\]
+
+    \column{0.46\textwidth}
+    \begin{alertblock}{Giới hạn Q-table truyền thống}
+      \begin{itemize}
+        \item State space \textbf{liên tục} và \textbf{32 chiều}
+        \item Bảng Q có kích thước vô hạn → \textbf{bất khả thi}
+        \item[$\Rightarrow$] Cần xấp xỉ bằng \textbf{mạng nơ-ron sâu}
+      \end{itemize}
+    \end{alertblock}
+    \vspace{6pt}
+    \begin{exampleblock}{Giải pháp: Deep Q-Network}
+      \[Q(s,a) \approx Q(s,a;\,\theta)\]
+      $\theta$ = trọng số mạng nơ-ron
+    \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 5: DQN ------
+\begin{frame}{Deep Q-Network (DQN)}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+    \textbf{Hàm mất mát (Huber / Smooth L1):}
+    \[\mathcal{L}(\theta) = \mathbb{E}_{(s,a,r,s')\sim\mathcal{B}}\bigl[\mathrm{SmoothL1}(Q(s,a;\theta)-y)\bigr]\]
+
+    \textbf{TD Target:}
+    \[y = r + \gamma\max_{a'}Q(s',a';\theta^-)\]
+
+    \vspace{6pt}
+    \begin{block}{Smooth L1 Loss (Huber)}
+      \[\mathrm{SmoothL1}(x)=\begin{cases}\tfrac{1}{2}x^2 & |x|\le 1\\ |x|-\tfrac{1}{2} & |x|>1\end{cases}\]
+      Ít nhạy cảm với \textit{outlier} hơn MSE
+    \end{block}
+
+    \column{0.44\textwidth}
+    \begin{block}{Kỹ thuật 1: Experience Replay}
+      \begin{itemize}
+        \item Lưu $(s,a,r,s',d)$ vào replay buffer
+        \item Sample minibatch \textbf{ngẫu nhiên}
+        \item Phá vỡ tương quan dữ liệu liên tiếp
+        \item Tái sử dụng kinh nghiệm nhiều lần
+      \end{itemize}
+    \end{block}
+    \vspace{6pt}
+    \begin{block}{Kỹ thuật 2: Target Network $\theta^-$}
+      \begin{itemize}
+        \item Mạng $\theta^-$ tách biệt với mạng online $\theta$
+        \item Cập nhật mỗi $N$ bước (hard copy)
+        \item Tránh \textit{moving target problem}
+        \item Ổn định quá trình hội tụ
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 6: ε-Greedy ------
+\begin{frame}{Chiến lược khám phá $\varepsilon$-Greedy}
+  \begin{columns}[T]
+    \column{0.55\textwidth}
+    \[a_t = \begin{cases}
+      \text{hành động ngẫu nhiên} & \text{xác suất } \varepsilon \\
+      \arg\max_a Q(s_t,a;\theta) & \text{xác suất } 1-\varepsilon
+    \end{cases}\]
+
+    \vspace{8pt}
+    \textbf{Lịch giảm tuyến tính:}
+    \[\varepsilon(t) = \varepsilon_{\text{start}} + \frac{\min(t,T)}{T}\cdot(\varepsilon_{\text{end}}-\varepsilon_{\text{start}})\]
+
+    \begin{center}
+    \begin{tabular}{lc}
+      \toprule
+      \textbf{Tham số} & \textbf{Giá trị}\\
+      \midrule
+      $\varepsilon_{\text{start}}$ & 1.0 (toàn khám phá)\\
+      $\varepsilon_{\text{end}}$   & 0.05 (5\% khám phá)\\
+      $T$ (số bước giảm)           & 100.000\\
+      \bottomrule
+    \end{tabular}
+    \end{center}
+
+    \column{0.42\textwidth}
+    \begin{tikzpicture}[scale=0.85]
+      \draw[->, thick] (0,0) -- (5,0) node[right]{\small Bước $t$};
+      \draw[->, thick] (0,0) -- (0,3.2) node[above]{\small $\varepsilon$};
+      % epsilon line
+      \draw[thick, vnblue, line width=2pt] (0,2.8) -- (2.8,0.4) -- (4.5,0.4);
+      % labels
+      \node[left]{\small 1.0} at (0,2.8);
+      \node[left] at (0,0.4) {\small 0.05};
+      \node[below] at (2.8,0) {\small 100K};
+      \node[below] at (4.5,0) {\small 200K};
+      % dashed
+      \draw[dashed, gray] (2.8,0) -- (2.8,0.4);
+      \draw[dashed, gray] (0,0.4) -- (2.8,0.4);
+      % annotations
+      \node[align=center, fill=vnblue!15, rounded corners, font=\tiny] at (1.4,1.8)
+        {Khám phá nhiều\\(thu thập kinh nghiệm)};
+      \node[align=center, fill=techgreen!15, rounded corners, font=\tiny] at (3.7,1.2)
+        {Khai thác\\(tinh chỉnh)};
+    \end{tikzpicture}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 7: Double DQN ------
+\begin{frame}{Double DQN --- Khắc phục Overestimation Bias}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{alertblock}{Vấn đề DQN tiêu chuẩn}
+      Cùng 1 mạng: vừa \textbf{chọn} vừa \textbf{đánh giá} hành động\\[4pt]
+      \[y_{\text{DQN}} = r + \gamma\underbrace{\max_{a'}Q(s',a';\theta^-)}_{\text{chọn + đánh giá = 1 mạng}}\]
+      $\Rightarrow$ Ước lượng Q quá cao (\textit{overestimation bias})
+    \end{alertblock}
+
+    \column{0.48\textwidth}
+    \begin{exampleblock}{Giải pháp Double DQN}
+      \textbf{Tách biệt hai vai trò:}
+      \begin{align*}
+        a^* &= \arg\max_{a'}Q(s',a';\alert{\theta})\quad\text{(online chọn)}\\
+        y   &= r + \gamma\, Q(s',a^*;\alert{\theta^-})\quad\text{(target đánh giá)}
+      \end{align*}
+      $\Rightarrow$ Giảm overestimation, Q chính xác hơn
+    \end{exampleblock}
+  \end{columns}
+
+  \vspace{8pt}
+  \begin{center}
+  \begin{tabular}{lcc}
+    \toprule
+    & \textbf{DQN tiêu chuẩn} & \textbf{Double DQN}\\
+    \midrule
+    Chọn $a^*$    & mạng target $\theta^-$ & mạng online $\theta$\\
+    Đánh giá $Q$  & mạng target $\theta^-$ & mạng target $\theta^-$\\
+    Overestimation & Cao & \textcolor{techgreen}{\textbf{Giảm đáng kể}}\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+\end{frame}
+
+% ------ Frame 8: Dueling Network ------
+\begin{frame}{Dueling Network Architecture}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \textbf{Tách biệt 2 luồng:}
+    \begin{itemize}
+      \item \textbf{Value stream} $V(s;\theta_v)$:\\
+            Giá trị của trạng thái $s$ --- bất kể hành động nào
+      \item \textbf{Advantage stream} $A(s,a;\theta_a)$:\\
+            Lợi thế tương đối của hành động $a$ tại $s$
+    \end{itemize}
+    \vspace{6pt}
+    \textbf{Kết hợp (đảm bảo identifiability):}
+    \[Q(s,a;\theta) = V(s) + \!\left[A(s,a) - \frac{1}{|A|}\sum_{a'}A(s,a')\right]\]
+    \vspace{4pt}
+    \begin{exampleblock}{Ưu điểm cho giao thông}
+      Nhiều tình huống: giá trị \textit{trạng thái} quan trọng hơn phân biệt hành động → $V(s)$ học hiệu quả hơn
+    \end{exampleblock}
+
+    \column{0.46\textwidth}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.82, font=\small,
+      lyr/.style={draw, rounded corners, minimum width=3cm, minimum height=0.55cm, align=center}]
+
+      \node[lyr, fill=vnblue!20]     (inp) at (0,4.8) {Input $s$ \;(32d)};
+      \node[lyr, fill=vnblue!30]     (b1)  at (0,3.8) {FC + LayerNorm + ReLU \;(128)};
+      \node[lyr, fill=vnblue!30]     (b2)  at (0,2.8) {FC + LayerNorm + ReLU \;(128)};
+      \node[lyr, fill=techgreen!35]  (val) at (-1.6,1.6) {Value $V$ \;(1)};
+      \node[lyr, fill=softorange!40] (adv) at (1.6,1.6)  {Advantage $A$ \;(4)};
+      \node[lyr, fill=gray!25]       (q)   at (0,0.5) {$Q(s,a)$ \;(4 actions)};
+
+      \draw[->, vnblue]        (inp) -- (b1);
+      \draw[->, vnblue]        (b1)  -- (b2);
+      \draw[->, techgreen]     (b2)  -- (val);
+      \draw[->, softorange]    (b2)  -- (adv);
+      \draw[->, techgreen]     (val) -- (q);
+      \draw[->, softorange]    (adv) -- (q);
+    \end{tikzpicture}
+    \end{center}
+  \end{columns}
+\end{frame}

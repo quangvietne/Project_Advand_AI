@@ -1,64 +1,92 @@
 """Fixed-time traffic light controller for baseline comparison."""
 
-from dataclasses import dataclass
-from typing import Optional, cast
+from dataclasses import dataclass, field
+from typing import Optional, List, Tuple, cast
+
 
 @dataclass
 class FixedTimeConfig:
-    """Configuration for fixed-time controller."""
-    green_duration: int = 55  # seconds (đèn xanh 55s)
-    yellow_duration: int = 5   # seconds (đèn vàng 5s → đèn đỏ = 55+5=60s)
-    phases_cycle: Optional[list] = None  # 4-phase cycle
+    """Configuration for fixed-time controller.
+
+    Hai chế độ:
+    1. Legacy (uniform): dùng green_duration + yellow_duration + phases_cycle
+       — mỗi pha nhận cùng thời gian xanh/vàng.
+    2. Explicit schedule: dùng phase_schedule = [(phase_idx, seconds), ...]
+       — mỗi pha có thời gian riêng; ưu tiên hơn legacy khi được cung cấp.
+
+    action_duration (giây/bước MDP) cần khớp với EnvConfig.action_duration
+    để quy đổi giây → số bước chính xác.
+    """
+    # Legacy params (backward compatible)
+    green_duration: int = 55        # giây xanh mỗi pha (legacy)
+    yellow_duration: int = 5        # giây vàng mỗi pha (legacy)
+    phases_cycle: Optional[List[int]] = None  # thứ tự pha (legacy)
+
+    # Explicit schedule: [(phase_idx, duration_seconds), ...]
+    # Nếu cung cấp → ưu tiên hơn legacy params
+    phase_schedule: Optional[List[Tuple[int, int]]] = None
+
+    # Giây mỗi bước MDP — phải khớp với EnvConfig.action_duration
+    action_duration: int = 5
 
     def __post_init__(self):
-        if self.phases_cycle is None:
-            self.phases_cycle = [0, 1, 2, 3]  # NS-straight, NS-left, EW-straight, EW-left
-        # Ensure phases_cycle is always a list after initialization
-        assert isinstance(self.phases_cycle, list), "phases_cycle must be a list"
+        if self.phase_schedule is None and self.phases_cycle is None:
+            self.phases_cycle = [0, 1, 2, 3]
+        if self.phases_cycle is not None:
+            assert isinstance(self.phases_cycle, list), "phases_cycle must be a list"
 
 
 class FixedTimeController:
-    """
-    Fixed-time traffic light controller.
-    
-    Cycles through 4 fixed phases:
-    - Phase 0: North-South straight/right
-    - Phase 1: North-South left
-    - Phase 2: East-West straight/right
-    - Phase 3: East-West left
-    
-    Each phase is green for `green_duration` steps, then yellow for `yellow_duration`.
+    """Fixed-time traffic light controller.
+
+    Chu kỳ mặc định mới (160s, tỉ lệ EW:NS = 2:1):
+      Phase 2 (EW xanh): 100s
+      Phase 3 (EW vàng):   5s
+      Phase 0 (NS xanh):  50s
+      Phase 1 (NS vàng):   5s
+
+    Hỗ trợ cả hai chế độ:
+    - Explicit schedule (khuyến nghị): truyền phase_schedule vào FixedTimeConfig
+    - Legacy uniform: dùng green_duration / yellow_duration / phases_cycle
     """
 
     def __init__(self, config: FixedTimeConfig) -> None:
-        """Initialize the fixed-time controller.
-        
-        Args:
-            config: Configuration with green_duration and yellow_duration.
-        """
-        self.green_duration = config.green_duration
-        self.yellow_duration = config.yellow_duration
-        self.cycle_length = self.green_duration + self.yellow_duration
-        # Cast to list since __post_init__ guarantees it's never None
-        phases = cast(list, config.phases_cycle)
-        self.total_cycle_length = self.cycle_length * len(phases)
-        self.phases_cycle: list = phases
+        self.action_duration = config.action_duration
+
+        if config.phase_schedule is not None:
+            # Chế độ schedule tường minh: chuyển giây → số bước MDP
+            self._sequence: List[int] = []
+            for phase_idx, duration_s in config.phase_schedule:
+                steps = max(1, round(duration_s / self.action_duration))
+                self._sequence.extend([phase_idx] * steps)
+        else:
+            # Chế độ legacy: tất cả pha dùng chung green + yellow duration
+            phases = cast(List[int], config.phases_cycle)
+            cycle_steps = config.green_duration + config.yellow_duration
+            self._sequence = []
+            for p in phases:
+                self._sequence.extend([p] * cycle_steps)
+
+        self._total = len(self._sequence)
         self.step_counter = 0
 
+    # ------------------------------------------------------------------
     def get_action(self) -> int:
-        """
-        Get the next action (phase index) based on fixed schedule.
-        
-        Returns:
-            Phase index (0-3) for the current step.
-        """
-        # Determine which phase in the cycle (each phase gets green_duration + yellow_duration steps)
-        phase_index = (self.step_counter // self.cycle_length) % len(self.phases_cycle)
-        action = self.phases_cycle[phase_index]
-        
+        """Trả về phase index cho bước MDP hiện tại."""
+        action = self._sequence[self.step_counter % self._total]
         self.step_counter += 1
         return action
 
     def reset(self) -> None:
-        """Reset the controller for a new episode."""
+        """Reset bộ đếm về đầu chu kỳ."""
         self.step_counter = 0
+
+    @property
+    def cycle_seconds(self) -> int:
+        """Tổng thời gian một chu kỳ (giây)."""
+        return self._total * self.action_duration
+
+    @property
+    def cycle_steps(self) -> int:
+        """Tổng số bước MDP một chu kỳ."""
+        return self._total

@@ -65,13 +65,20 @@ class EpisodeMetrics:
         }
 
 
-def run_episode(env_config: EnvConfig, agent=None, verbose: bool = False) -> EpisodeMetrics:
+def run_episode(
+    env_config: EnvConfig,
+    agent=None,
+    verbose: bool = False,
+    fixed_time_phase_schedule: Optional[List] = None,
+) -> EpisodeMetrics:
     """Run a single episode and collect metrics.
 
     Args:
-        env_config: Environment configuration.
-        agent:      DQN agent. If None, uses FixedTimeController.
-        verbose:    Print step-level progress.
+        env_config:                 Environment configuration.
+        agent:                      DQN agent. If None, uses FixedTimeController.
+        verbose:                    Print step-level progress.
+        fixed_time_phase_schedule:  Phase schedule for FixedTimeController
+                                    (list of [phase_idx, duration_s]).
 
     Returns:
         EpisodeMetrics with collected data.
@@ -80,10 +87,16 @@ def run_episode(env_config: EnvConfig, agent=None, verbose: bool = False) -> Epi
     state = env.reset()
     metrics = EpisodeMetrics()
 
+    _schedule = fixed_time_phase_schedule or [(2, 100), (3, 5), (0, 50), (1, 5)]
     controller = None
     strategy_name = "DQN" if agent is not None else "Fixed-Time"
     if agent is None:
-        controller = FixedTimeController(FixedTimeConfig(green_duration=55, yellow_duration=5))
+        controller = FixedTimeController(
+            FixedTimeConfig(
+                phase_schedule=[tuple(p) for p in _schedule],
+                action_duration=env_config.action_duration,
+            )
+        )
 
     step_count = 0
     while True:
@@ -148,6 +161,7 @@ def run_parallel_comparison(
     model_path: Optional[Path] = None,
     num_episodes: int = 1,
     save_results: bool = True,
+    fixed_time_phase_schedule: Optional[List] = None,
 ) -> None:
     """Run comparison and display results."""
     print("\n" + "=" * 100)
@@ -159,6 +173,18 @@ def run_parallel_comparison(
     print("=" * 100 + "\n")
 
     # Load DQN agent — state_dim is lanes×4; resolve from a quick env reset
+    # Tự động tìm model nếu không truyền --model-path
+    if model_path is None or not model_path.exists():
+        _candidates = [
+            Path("outputs/dqn_vn_tls_best.pt"),
+            Path("outputs/dqn_vn_tls.pt"),
+        ]
+        for _candidate in _candidates:
+            if _candidate.exists():
+                model_path = _candidate
+                print(f"✓ Auto-detected model: {model_path}\n")
+                break
+
     agent = None
     if model_path and model_path.exists():
         _tmp = SumoMDPEnv(env_config)
@@ -166,7 +192,8 @@ def run_parallel_comparison(
         _tmp.close()
         agent = load_dqn_agent(model_path, state_dim, len(env_config.phases))
     else:
-        print("⚠ No model path provided. Running Fixed-Time only.\n")
+        print("⚠ No model found in outputs/. Running Fixed-Time only.\n"
+              "  → Train first: python scripts/train.py\n")
 
     all_dqn: List[Dict] = []
     all_fixed: List[Dict] = []
@@ -177,12 +204,14 @@ def run_parallel_comparison(
 
         if agent:
             print("  [DQN] Running...", end="", flush=True)
-            dqn_summary = run_episode(env_config, agent=agent).summarize()
+            dqn_summary = run_episode(env_config, agent=agent,
+                                      fixed_time_phase_schedule=fixed_time_phase_schedule).summarize()
             all_dqn.append(dqn_summary)
             print(f" done  (vehicles: {dqn_summary['total_vehicles']})")
 
         print("  [Fixed-Time] Running...", end="", flush=True)
-        fixed_summary = run_episode(env_config, agent=None).summarize()
+        fixed_summary = run_episode(env_config, agent=None,
+                                    fixed_time_phase_schedule=fixed_time_phase_schedule).summarize()
         all_fixed.append(fixed_summary)
         print(f" done  (vehicles: {fixed_summary['total_vehicles']})")
 
@@ -255,15 +284,24 @@ def main() -> None:
         tls_id=sumo_cfg.get("tls_id", "c"),
         phases=sumo_cfg.get("phases", [0, 1, 2, 3]),
         action_duration=_action_dur,
-        min_phase_steps=max(1, sumo_cfg.get("min_phase_duration", 30) // _action_dur),
-        max_phase_steps=max(2, sumo_cfg.get("max_phase_duration", 120) // _action_dur),
+        min_phase_steps=max(1, sumo_cfg.get("min_phase_duration", 5) // _action_dur),
+        max_phase_steps=max(2, sumo_cfg.get("max_phase_duration", 140) // _action_dur),
         max_steps=sumo_cfg.get("max_steps", 3600),
         warmup_steps=sumo_cfg.get("warmup_steps", 60),
         gui=False,
         vn_weights=VNWeights(**cfg.get("vn_weights", {})),
+        phase_green_min={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_min", {}).items()
+        },
+        phase_green_max={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_max", {}).items()
+        },
     )
 
-    run_parallel_comparison(env_config, args.model_path, args.episodes, not args.no_save)
+    ft_schedule = sumo_cfg.get("fixed_time_phase_schedule", [(2, 100), (3, 5), (0, 50), (1, 5)])
+    run_parallel_comparison(env_config, args.model_path, args.episodes, not args.no_save, ft_schedule)
 
 
 if __name__ == "__main__":

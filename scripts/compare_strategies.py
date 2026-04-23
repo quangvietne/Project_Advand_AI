@@ -36,10 +36,13 @@ class ComparisonRunner:
         env_config: EnvConfig,
         num_episodes: int = 20,
         model_path: Optional[Path] = None,
+        fixed_time_phase_schedule: Optional[List] = None,
     ):
         self.env_config = env_config
         self.num_episodes = num_episodes
         self.model_path = model_path
+        # Default: 160s asymmetric cycle (EW 100s → yellow 5s → NS 50s → yellow 5s)
+        self.fixed_time_phase_schedule = fixed_time_phase_schedule or [(2, 100), (3, 5), (0, 50), (1, 5)]
 
         _keys = ["total_wait", "avg_queue", "max_queue", "throughput",
                  "episode_reward", "avg_speed", "avg_occupancy", "avg_halting_vehicles"]
@@ -62,7 +65,10 @@ class ComparisonRunner:
         controller = None
         if agent is None:
             controller = FixedTimeController(
-                FixedTimeConfig(green_duration=55, yellow_duration=5)
+                FixedTimeConfig(
+                    phase_schedule=[tuple(p) for p in self.fixed_time_phase_schedule],
+                    action_duration=self.env_config.action_duration,
+                )
             )
 
         total_reward = 0.0
@@ -105,12 +111,29 @@ class ComparisonRunner:
             agent: Optional pre-loaded DQN agent.
                    If None, tries to load from self.model_path.
         """
-        if agent is None and self.model_path and self.model_path.exists():
-            # Resolve actual state_dim from a quick environment reset
-            _tmp = SumoMDPEnv(self.env_config)
-            state_dim = _tmp.reset().shape[0]
-            _tmp.close()
-            agent = load_dqn_agent(self.model_path, state_dim, len(self.env_config.phases))
+        # Tự động tìm model nếu không truyền --model-path
+        if agent is None:
+            model_path = self.model_path
+            if model_path is None or not model_path.exists():
+                _candidates = [
+                    Path("outputs/dqn_vn_tls_best.pt"),
+                    Path("outputs/dqn_vn_tls.pt"),
+                ]
+                for _c in _candidates:
+                    if _c.exists():
+                        model_path = _c
+                        print(f"✓ Auto-detected model: {model_path}")
+                        break
+
+            if model_path and model_path.exists():
+                # Resolve actual state_dim from a quick environment reset
+                _tmp = SumoMDPEnv(self.env_config)
+                state_dim = _tmp.reset().shape[0]
+                _tmp.close()
+                agent = load_dqn_agent(model_path, state_dim, len(self.env_config.phases))
+            else:
+                print("⚠ No model found in outputs/. DQN will be skipped.\n"
+                      "  → Train first: python scripts/train.py")
 
         print(f"\n{'=' * 60}")
         print("COMPARISON: DQN vs Fixed-Time Controller")
@@ -203,7 +226,7 @@ def main() -> None:
     parser.add_argument("--model-path",   type=Path, default=None)
     parser.add_argument("--num-episodes", type=int,  default=20)
     parser.add_argument("--output-dir",   type=Path, default=Path("outputs/comparison"))
-    parser.add_argument("--no-gui",       action="store_true")
+    parser.add_argument("--gui",           action="store_true")
     args = parser.parse_args()
 
     cfg = load_config()
@@ -215,15 +238,24 @@ def main() -> None:
         tls_id=sumo_cfg.get("tls_id", "c"),
         phases=sumo_cfg.get("phases", [0, 1, 2, 3]),
         action_duration=_action_dur,
-        min_phase_steps=max(1, sumo_cfg.get("min_phase_duration", 30) // _action_dur),
-        max_phase_steps=max(2, sumo_cfg.get("max_phase_duration", 120) // _action_dur),
+        min_phase_steps=max(1, sumo_cfg.get("min_phase_duration", 5) // _action_dur),
+        max_phase_steps=max(2, sumo_cfg.get("max_phase_duration", 140) // _action_dur),
         max_steps=sumo_cfg.get("max_steps", 3600),
         warmup_steps=sumo_cfg.get("warmup_steps", 60),
-        gui=not args.no_gui,
+        gui=args.gui,
         vn_weights=VNWeights(**cfg.get("vn_weights", {})),
+        phase_green_min={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_min", {}).items()
+        },
+        phase_green_max={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_max", {}).items()
+        },
     )
 
-    runner = ComparisonRunner(env_config, args.num_episodes, args.model_path)
+    ft_schedule = sumo_cfg.get("fixed_time_phase_schedule", [(2, 100), (3, 5), (0, 50), (1, 5)])
+    runner = ComparisonRunner(env_config, args.num_episodes, args.model_path, ft_schedule)
     runner.run_comparison()
     runner.save_results(args.output_dir)
 

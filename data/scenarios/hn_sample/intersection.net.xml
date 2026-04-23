@@ -110,9 +110,13 @@
     </edge>
 
     <tlLogic id="c" type="static" programID="0" offset="0">
-        <phase duration="55" state="GGGgrrrrGGGgrrrr"/>
+        <!-- Phase 0: NS xanh (Bắc-Nam) — 50s, khớp với Fixed-Time baseline -->
+        <phase duration="50" state="GGGgrrrrGGGgrrrr"/>
+        <!-- Phase 1: NS vàng — 5s -->
         <phase duration="5"  state="yyyyrrrryyyyrrrr"/>
-        <phase duration="55" state="rrrrGGGgrrrrGGGg"/>
+        <!-- Phase 2: EW xanh (Đông-Tây, trục chính) — 100s, khớp với Fixed-Time baseline -->
+        <phase duration="100" state="rrrrGGGgrrrrGGGg"/>
+        <!-- Phase 3: EW vàng — 5s -->
         <phase duration="5"  state="rrrryyyyrrrryyyy"/>
     </tlLogic>
 

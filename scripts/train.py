@@ -30,13 +30,21 @@ def main(cfg_path: str = "config.yaml") -> None:
         phases=cfg["sumo"]["phases"],
         step_length=cfg["sumo"].get("step_length", 1.0),
         action_duration=_action_dur,
-        min_phase_steps=max(1, cfg["sumo"].get("min_phase_duration", 30) // _action_dur),
-        max_phase_steps=max(2, cfg["sumo"].get("max_phase_duration", 120) // _action_dur),
+        min_phase_steps=max(1, cfg["sumo"].get("min_phase_duration", 5) // _action_dur),
+        max_phase_steps=max(2, cfg["sumo"].get("max_phase_duration", 140) // _action_dur),
         max_steps=cfg["sumo"].get("max_steps", 3600),
         warmup_steps=cfg["sumo"].get("warmup_steps", 0),
         gui=cfg["sumo"].get("gui", False),
         vn_weights=VNWeights(**cfg.get("vn_weights", {})),
         reward_type=cfg.get("reward", {}).get("type", "queue_delay"),
+        phase_green_min={
+            int(k): max(1, v // _action_dur)
+            for k, v in cfg["sumo"].get("phase_green_min", {}).items()
+        },
+        phase_green_max={
+            int(k): max(1, v // _action_dur)
+            for k, v in cfg["sumo"].get("phase_green_max", {}).items()
+        },
     )
     env = SumoMDPEnv(env_cfg)
 

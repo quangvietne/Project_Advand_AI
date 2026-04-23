@@ -50,21 +50,26 @@ def generate_simple_intersection(output_dir: str = "data/scenarios/hn_sample") -
     <route id="e2w" edges="e2c c2w"/>
     <route id="w2e" edges="w2c c2e"/>
 
-    <!-- Traffic flows reflecting VN distribution: ~60% motorcycles, 30% cars, 10% trucks/buses -->
-    <!-- Probabilities doubled for 2 lanes compared to 1 lane -->
-    <flow id="flow_n2s_moto" type="motorcycle" route="n2s" begin="0" end="3600" probability="0.30"/>
-    <flow id="flow_n2s_car" type="car" route="n2s" begin="0" end="3600" probability="0.15"/>
-    <flow id="flow_n2s_bus" type="bus" route="n2s" begin="0" end="3600" probability="0.05"/>
-    
-    <flow id="flow_s2n_moto" type="motorcycle" route="s2n" begin="0" end="3600" probability="0.30"/>
-    <flow id="flow_s2n_car" type="car" route="s2n" begin="0" end="3600" probability="0.15"/>
-    
-    <flow id="flow_e2w_moto" type="motorcycle" route="e2w" begin="0" end="3600" probability="0.36"/>
-    <flow id="flow_e2w_car" type="car" route="e2w" begin="0" end="3600" probability="0.18"/>
-    <flow id="flow_e2w_truck" type="truck" route="e2w" begin="0" end="3600" probability="0.06"/>
-    
-    <flow id="flow_w2e_moto" type="motorcycle" route="w2e" begin="0" end="3600" probability="0.36"/>
-    <flow id="flow_w2e_car" type="car" route="w2e" begin="0" end="3600" probability="0.18"/>
+    <!-- Traffic flows: EW (truc chinh) = dung 2x NS (truc phu) -->
+    <!-- Ti le luu luong EW:NS = 2:1 (chinh xac) -->
+    <!-- NS: moto 0.15 + car 0.075 + bus 0.025 = 0.25/s/huong -->
+    <!-- EW: moto 0.30 + car 0.15  + truck 0.05 = 0.50/s/huong = 2x NS -->
+
+    <!-- Truc PHU Bac-Nam -->
+    <flow id="flow_n2s_moto" type="motorcycle" route="n2s" begin="0" end="3660" probability="0.15"/>
+    <flow id="flow_n2s_car" type="car" route="n2s" begin="0" end="3660" probability="0.075"/>
+    <flow id="flow_n2s_bus" type="bus" route="n2s" begin="0" end="3660" probability="0.025"/>
+
+    <flow id="flow_s2n_moto" type="motorcycle" route="s2n" begin="0" end="3660" probability="0.15"/>
+    <flow id="flow_s2n_car" type="car" route="s2n" begin="0" end="3660" probability="0.075"/>
+
+    <!-- Truc CHINH Dong-Tay (2x NS) -->
+    <flow id="flow_e2w_moto" type="motorcycle" route="e2w" begin="0" end="3660" probability="0.30"/>
+    <flow id="flow_e2w_car" type="car" route="e2w" begin="0" end="3660" probability="0.15"/>
+    <flow id="flow_e2w_truck" type="truck" route="e2w" begin="0" end="3660" probability="0.05"/>
+
+    <flow id="flow_w2e_moto" type="motorcycle" route="w2e" begin="0" end="3660" probability="0.30"/>
+    <flow id="flow_w2e_car" type="car" route="w2e" begin="0" end="3660" probability="0.15"/>
 </routes>
 """)
 
@@ -77,7 +82,7 @@ def generate_simple_intersection(output_dir: str = "data/scenarios/hn_sample") -
     </input>
     <time>
         <begin value="0"/>
-        <end value="3600"/>
+        <end value="3660"/>
     </time>
     <processing>
         <time-to-teleport value="-1"/>

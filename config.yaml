@@ -8,11 +8,28 @@ sumo:
   phases: [0, 1, 2, 3]
   step_length: 1.0
   action_duration: 5
-  min_phase_duration: 30   # giây — thời gian giữ pha tối thiểu (30 ÷ 5 = 6 bước)
-  max_phase_duration: 120  # giây — thời gian giữ pha tối đa  (120 ÷ 5 = 24 bước)
+  min_phase_duration: 5    # giây — global fallback tối thiểu (khi pha không có trong per-phase)
+  max_phase_duration: 140  # giây — global fallback tối đa
+
+  # Per-phase green constraints (giây) — ghi đè global min/max_phase_duration
+  # Pha 0 = NS xanh (trục phụ), Pha 2 = EW xanh (trục chính)
+  phase_green_min:
+    0: 30    # NS xanh tối thiểu 30s (6 bước)
+    2: 60    # EW xanh tối thiểu 60s (12 bước)
+  phase_green_max:
+    0: 70    # NS xanh tối đa 70s (14 bước)
+    2: 140   # EW xanh tối đa 140s (28 bước)
   max_steps: 3600
   warmup_steps: 60
   gui: false
+
+  # Fixed-Time controller phase schedule (danh sách [phase_idx, duration_s])
+  # Chu kỳ 160s bất đối xứng: EW xanh 100s -> EW vàng 5s -> NS xanh 50s -> NS vàng 5s
+  fixed_time_phase_schedule:
+    - [2, 100]   # Pha 2: EW xanh 100s (trục chính)
+    - [3,   5]   # Pha 3: EW vàng 5s
+    - [0,  50]   # Pha 0: NS xanh 50s (trục phụ)
+    - [1,   5]   # Pha 1: NS vàng 5s
 
 # Vietnamese vehicle weighting to reflect motorcycle prevalence
 vn_weights:

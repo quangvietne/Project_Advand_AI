@@ -119,17 +119,20 @@ def run_fixed_time_simulation(
     env_config: EnvConfig,
     metrics: SimulationMetrics,
     max_steps: int = 3600,
+    phase_schedule: Optional[List] = None,
 ) -> None:
     """Run Fixed-Time simulation in a separate thread."""
     try:
         metrics.start()
         env = SumoMDPEnv(env_config)
         state = env.reset()
-        
+
+        # Dùng 160s schedule bất đối xứng (EW:NS = 2:1) từ config, khớp với báo cáo
+        _schedule = phase_schedule or [(2, 100), (3, 5), (0, 50), (1, 5)]
         controller = FixedTimeController(
             FixedTimeConfig(
-                green_duration=55,
-                yellow_duration=5,
+                phase_schedule=[tuple(p) for p in _schedule],
+                action_duration=env_config.action_duration,
             )
         )
         
@@ -239,6 +242,7 @@ def run_dual_comparison(
     model_path: Optional[Path] = None,
     num_episodes: int = 1,
     update_interval: int = 100,
+    ft_schedule: Optional[List] = None,
 ) -> None:
     """Run dual simulation with real-time metrics display.
     
@@ -258,8 +262,11 @@ def run_dual_comparison(
         try:
             print(f"\n📦 Loading DQN model from {model_path}...")
             num_phases = len(env_config.phases)
-            state_dim = num_phases * 4
-            
+            # Resolve state_dim thực tế từ env (lanes × 4 features = 8 × 4 = 32)
+            _tmp_env = SumoMDPEnv(env_config)
+            state_dim = _tmp_env.reset().shape[0]
+            _tmp_env.close()
+
             agent_cfg = AgentConfig(state_dim=state_dim, action_dim=num_phases)
             agent = DQNAgent(agent_cfg)
             
@@ -303,7 +310,7 @@ def run_dual_comparison(
         )
         fixed_thread = threading.Thread(
             target=run_fixed_time_simulation,
-            args=(env_config, fixed_metrics, env_config.max_steps),
+            args=(env_config, fixed_metrics, env_config.max_steps, ft_schedule),
             daemon=True
         )
         
@@ -366,23 +373,37 @@ def main():
     )
     
     args = parser.parse_args()
-    
-    # Create environment config
+
+    # Đọc từ config.yaml để đảm bảo nhất quán với train.py và báo cáo
+    cfg = load_config()
+    sumo_cfg = cfg.get("sumo", {})
+    _action_dur = sumo_cfg.get("action_duration", 5)
+
     env_config = EnvConfig(
-        sumocfg_path=args.scenario,
-        tls_id="c",
-        phases=[0, 1, 2, 3],
-        action_duration=5,
-        min_phase_steps=6,   # 30s min (6 × 5s)
-        max_phase_steps=24,  # 120s max (24 × 5s)
-        max_steps=3600,
-        warmup_steps=60,
+        sumocfg_path=args.scenario or sumo_cfg.get("sumocfg_path", "data/scenarios/hn_sample/config.sumocfg"),
+        tls_id=sumo_cfg.get("tls_id", "c"),
+        phases=sumo_cfg.get("phases", [0, 1, 2, 3]),
+        action_duration=_action_dur,
+        min_phase_steps=max(1, sumo_cfg.get("min_phase_duration", 5) // _action_dur),
+        max_phase_steps=max(2, sumo_cfg.get("max_phase_duration", 140) // _action_dur),
+        max_steps=sumo_cfg.get("max_steps", 3600),
+        warmup_steps=sumo_cfg.get("warmup_steps", 60),
         gui=False,
-        vn_weights=VNWeights(motorcycle=0.5, car=1.5, bus=2.0, truck=2.0),
+        vn_weights=VNWeights(**cfg.get("vn_weights", {})),
+        phase_green_min={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_min", {}).items()
+        },
+        phase_green_max={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_max", {}).items()
+        },
     )
-    
+
+    ft_schedule = sumo_cfg.get("fixed_time_phase_schedule", [(2, 100), (3, 5), (0, 50), (1, 5)])
+
     # Run dual comparison
-    run_dual_comparison(env_config, args.model_path, args.episodes, args.update_interval)
+    run_dual_comparison(env_config, args.model_path, args.episodes, args.update_interval, ft_schedule)
 
 
 if __name__ == "__main__":

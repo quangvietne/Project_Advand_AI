@@ -1,0 +1,60 @@
+% =========================================
+% PHẦN 1: Đặt vấn đề và Mục tiêu nghiên cứu
+% =========================================
+
+\begin{frame}
+  \centering
+  \Huge \textbf{PHẦN 1} \\[0.5cm]
+  \LARGE Đặt vấn đề và Mục tiêu nghiên cứu
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Bài toán điều khiển đèn giao thông}
+\begin{itemize}
+    \item \textbf{Bối cảnh:} Ùn tắc giao thông đô thị ngày càng nghiêm trọng tại Hà Nội và TP.HCM, gây thiệt hại kinh tế hàng tỷ đồng mỗi ngày.
+    \item \textbf{Đặc thù giao thông Việt Nam:}
+    \begin{itemize}
+        \item Xe máy chiếm $\approx$60--70\% tổng lưu lượng — cao hơn nhiều so với các nước phát triển
+        \item Hệ số PCU: 1 ô tô $\approx$ 3 xe máy về chiếm dụng diện tích
+        \item Lưu lượng bất đối xứng giữa các trục đường (ví dụ: Đông–Tây gấp đôi Bắc–Nam)
+    \end{itemize}
+    \item \textbf{Hạn chế phương pháp truyền thống:}
+    \begin{itemize}
+        \item Điều khiển thời gian cố định (Fixed-Time): chu kỳ cứng nhắc, không thích ứng
+        \item Không phản ứng với biến động lưu lượng thực tế
+        \item Hầu hết nghiên cứu hiện có xây dựng cho giao thông Châu Âu/Bắc Mỹ
+    \end{itemize}
+    \item \textbf{Mục tiêu điều khiển:} Phân bổ thời gian xanh và chuyển pha tối ưu nhằm giảm ùn tắc, thích ứng theo lưu lượng thực tế.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Giao thông như một bài toán ra quyết định tuần tự}
+\begin{itemize}
+    \item \textbf{Định nghĩa:} Điều khiển đèn giao thông diễn ra theo chuỗi thời gian, quyết định hiện tại ảnh hưởng đến trạng thái tương lai.
+    \item \textbf{Đặc điểm:}
+    \begin{itemize}
+        \item \textbf{Sự đánh đổi:} Ưu tiên một hướng có thể gây ùn tắc ở hướng khác.
+        \item \textbf{Tính động:} Hệ thống tiến triển liên tục; trạng thái kế tiếp phụ thuộc trạng thái hiện tại và hành động đã thực hiện.
+        \item \textbf{Tính ngẫu nhiên:} Phương tiện đến ngẫu nhiên, không thể dự đoán chính xác.
+    \end{itemize}
+    \item \textbf{Yêu cầu:} Cần một khung mô hình hóa được sự tiến triển trạng thái và tác động dài hạn của quyết định.
+    \item \textbf{Hướng tiếp cận:} Mô hình hóa bài toán dưới dạng \textbf{MDP} và áp dụng \textbf{Deep Reinforcement Learning (Double DQN)} để học chính sách điều khiển tối ưu.
+\end{itemize}
+\end{frame}
+
+%---------------------------------
+\begin{frame}{Mục tiêu dự án}
+\begin{enumerate}
+    \item \textbf{Xây dựng môi trường mô phỏng} ngã tư Hà Nội mẫu bằng \textbf{SUMO} — tích hợp phân bố xe đặc trưng VN (60\% xe máy) và hệ số PCU chuẩn hóa.
+
+    \vspace{4pt}
+    \item \textbf{Mô hình hóa bài toán} dưới dạng Mô hình Quyết định Markov (MDP): xác định không gian trạng thái (32 chiều), không gian hành động (4 pha đèn) và hàm phần thưởng phản ánh mức độ ùn tắc.
+
+    \vspace{4pt}
+    \item \textbf{Triển khai thuật toán Double DQN kết hợp Dueling Network} để huấn luyện agent tự thích ứng với biến động giao thông theo thời gian thực.
+
+    \vspace{4pt}
+    \item \textbf{Đánh giá định lượng} DQN agent so với baseline Fixed-Time 160s qua các chỉ số: hàng đợi, thời gian chờ, tốc độ lưu thông và lưu lượng xe qua nút.
+\end{enumerate}
+\end{frame}

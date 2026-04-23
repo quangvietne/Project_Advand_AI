@@ -1,0 +1,45 @@
+\documentclass{beamer}
+\usetheme{Madrid}
+% \usetheme{Boadilla}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+
+\title{Tối ưu hóa điều khiển đèn tín hiệu giao thông dựa trên Mô hình Quyết định Markov}
+\date{}
+
+% --- LỆNH ĐỂ BỎ CHÂN TRANG (FOOTLINE) ---
+\setbeamertemplate{footline}{}
+% -----------------------------------------
+
+\begin{document}
+
+%---------------------------------
+\begin{frame}
+\titlepage
+\vspace{-3cm}
+    \begin{center}
+        \item Nguyễn Quang Việt – MSSV: 22001659
+        \item Phùng Hữu Uy – MSSV: 22001654
+    \end{center}
+\end{frame}
+
+% --- SLIDE 2: NỘI DUNG TRÌNH BÀY (AGENDA) ---
+\begin{frame}{Nội dung trình bày}
+    \begin{enumerate}
+        \item Đặt vấn đề và Mục tiêu nghiên cứu
+        \item Quá trình Quyết định Markov (MDP)
+        \item Lý thuyết về Học tăng cường (Reinforcement Learning)
+        \item Deep Q-Network (DQN) \& Các cơ chế nâng cao
+        \item Kết quả thực nghiệm
+    \end{enumerate}
+\end{frame}
+
+\input{Chuong1}
+\input{Chuong2}
+\input{Chuong3}
+\input{Chuong4}
+\input{Chuong5}
+
+\end{document}

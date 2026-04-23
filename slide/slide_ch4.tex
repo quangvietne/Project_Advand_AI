@@ -1,0 +1,230 @@
+% ============================================================
+%  slide_ch4.tex — Chương IV: Thực nghiệm và Đánh giá
+%  6 frames
+% ============================================================
+\section{Chương IV: Thực nghiệm và Đánh giá}
+
+% ------ Frame 1: Thiết lập ------
+\begin{frame}{Thiết lập thực nghiệm}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{block}{Cấu hình mô phỏng}
+      \begin{tabular}{@{}ll}
+        \toprule
+        \textbf{Tham số} & \textbf{Giá trị}\\
+        \midrule
+        Kịch bản    & Ngã tư HN mẫu\\
+        Bước thời gian & 1.0 giây\\
+        Mỗi episode & 3600 giây (1 giờ)\\
+        Warmup      & 60 giây\\
+        Hành động   & mỗi 5 giây\\
+        GUI         & Tắt (headless)\\
+        \bottomrule
+      \end{tabular}
+    \end{block}
+    \vspace{6pt}
+    \begin{block}{Baseline: Fixed-Time 160s}
+      \begin{tabular}{@{}lcc}
+        \toprule
+        \textbf{Pha} & \textbf{Trục} & \textbf{Thời gian}\\
+        \midrule
+        Pha 2 xanh & EW (chính) & 100s\\
+        Pha 3 vàng & EW         & 5s\\
+        Pha 0 xanh & NS (phụ)   & 50s\\
+        Pha 1 vàng & NS         & 5s\\
+        \midrule
+        \multicolumn{2}{l}{\textbf{Tổng chu kỳ}} & \textbf{160s}\\
+        \bottomrule
+      \end{tabular}
+    \end{block}
+
+    \column{0.48\textwidth}
+    \begin{block}{5 chỉ số đánh giá}
+      \begin{enumerate}
+        \item \textbf{Avg Queue Length}\\
+              Số xe dừng TB trên tất cả làn
+        \vspace{4pt}
+        \item \textbf{Max Queue Length}\\
+              Đỉnh ùn tắc cực đại
+        \vspace{4pt}
+        \item \textbf{Avg Wait Time}\\
+              Thời gian chờ TB (s/bước)
+        \vspace{4pt}
+        \item \textbf{Throughput}\\
+              Tổng xe qua nút / episode
+        \vspace{4pt}
+        \item \textbf{Total Reward}\\
+              $\sum_t R_t$ tích lũy --- chỉ số tổng hợp
+      \end{enumerate}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 2: Bảng kết quả tổng hợp ------
+\begin{frame}{Kết quả so sánh DQN vs. Fixed-Time}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{lcccc}
+    \toprule
+    \textbf{Chỉ số} & \textbf{DQN} & \textbf{Fixed-Time} & \textbf{Thay đổi} & \textbf{Cải thiện}\\
+    \midrule
+    \rowcolor{lightgreen}
+    Hàng đợi TB (xe)     & \textbf{16.05} & 33.13 & $-$17.08 & \textcolor{techgreen}{\textbf{$\downarrow$51.6\%}}\\
+    Hàng đợi Max (xe)    & \textbf{51}    & 66    & $-$15    & \textcolor{techgreen}{\textbf{$\downarrow$22.7\%}}\\
+    \rowcolor{lightgreen}
+    Độ lệch chuẩn        & \textbf{8.16}  & 12.77 & $-$4.61  & \textcolor{techgreen}{\textbf{$\downarrow$36.1\%}}\\
+    Thời gian chờ (s)    & \textbf{30.55} & 121.35& $-$90.80 & \textcolor{techgreen}{\textbf{$\downarrow$74.8\%}}\\
+    \rowcolor{lightgreen}
+    Tốc độ TB (m/s)      & \textbf{5.65}  & 4.87  & $+$0.78  & \textcolor{techgreen}{\textbf{$\uparrow$16.0\%}}\\
+    Throughput (xe/ep.)  & \textbf{344}   & 338   & $+$6     & \textcolor{techgreen}{\textbf{$\uparrow$1.8\%}}\\
+    \rowcolor{lightgreen}
+    Total Reward         & \textbf{$-$14.754} & $-$35.512 & $+$20.758 & \textcolor{techgreen}{\textbf{$\uparrow$58.5\%}}\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{6pt}
+  \begin{center}
+    \begin{beamercolorbox}[sep=6pt, center, rounded=true]{block title}
+      \textbf{DQN vượt trội hơn Fixed-Time trên tất cả 7 chỉ số}
+    \end{beamercolorbox}
+  \end{center}
+\end{frame}
+
+% ------ Frame 3: Phân tích Hàng đợi ------
+\begin{frame}{Phân tích: Hàng đợi và Thời gian chờ}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \begin{block}{Hàng đợi trung bình}
+      \begin{itemize}
+        \item DQN: \textbf{16.05 xe/làn}
+        \item Fixed-Time: \textbf{33.13 xe/làn}
+        \item[$\Rightarrow$] \alert{Giảm 51.6\%}
+      \end{itemize}
+      Độ lệch chuẩn: 8.16 vs 12.77\\
+      $\Rightarrow$ DQN \textbf{ổn định hơn 36.1\%}\\
+      (ít đợt ùn tắc cục bộ đột ngột)
+    \end{block}
+    \vspace{6pt}
+    \begin{block}{Thời gian chờ trung bình}
+      \begin{itemize}
+        \item DQN: \textbf{30.55 s/bước}
+        \item Fixed-Time: \textbf{121.35 s/bước}
+        \item[$\Rightarrow$] \alert{Giảm 74.8\%}
+      \end{itemize}
+      Cải thiện lớn nhất trong tất cả chỉ số
+    \end{block}
+
+    \column{0.46\textwidth}
+    \begin{exampleblock}{Lý do DQN tốt hơn}
+      \begin{itemize}
+        \item Quan sát $q_i$, $w_i$ liên tục theo thời gian thực
+        \item \textbf{Tập trung thời gian xanh} vào hướng đang tích lũy xe
+        \item Không lãng phí thời gian xanh khi hướng đó vắng xe
+      \end{itemize}
+    \end{exampleblock}
+    \vspace{6pt}
+    \begin{alertblock}{Fixed-Time không thể làm điều này}
+      Dù NS tắc hay EW trống, đèn vẫn giữ đúng \textbf{100s / 50s cố định} --- không phản ứng với thực tế
+    \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 4: Phân tích Tốc độ & Throughput ------
+\begin{frame}{Phân tích: Tốc độ, Throughput và Reward}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \begin{block}{Tốc độ lưu thông}
+      DQN: \textbf{5.65 m/s} \quad Fixed-Time: \textbf{4.87 m/s}\\
+      $\Rightarrow$ \textcolor{techgreen}{\textbf{Tăng 16.0\%}}\\[4pt]
+      Xe di chuyển nhanh hơn → dòng chảy thông thoáng hơn tổng thể
+    \end{block}
+    \vspace{6pt}
+    \begin{block}{Throughput}
+      DQN: \textbf{344 xe} \quad Fixed-Time: \textbf{338 xe}\\
+      $\Rightarrow$ \textcolor{techgreen}{\textbf{Tăng 1.8\%}} \quad (khiêm tốn)\\[4pt]
+      Cả hai xử lý lượng xe tương đương, nhưng DQN làm với \textbf{ít ùn tắc và chờ đợi} hơn đáng kể
+    \end{block}
+    \vspace{6pt}
+    \begin{block}{Tổng Reward}
+      DQN: $-$14.754 \quad Fixed-Time: $-$35.512\\
+      $\Rightarrow$ \textcolor{techgreen}{\textbf{Cải thiện 58.5\%}}\\
+      Agent đã tối ưu hóa thành công hàm mục tiêu
+    \end{block}
+
+    \column{0.46\textwidth}
+    \begin{exampleblock}{Chiến lược DQN học được}
+      \begin{itemize}
+        \setlength{\itemsep}{5pt}
+        \item \textbf{Ưu tiên làn hàng đợi dài}:\\
+              Tập trung xanh cho hướng đang tắc
+        \item \textbf{Giữ EW $\geq$ 60s}:\\
+              Đủ thời gian xử lý trục chính (lưu lượng gấp đôi)
+        \item \textbf{Không bỏ quên NS}:\\
+              $t_{\max}=70$s ép chuyển pha đúng lúc
+        \item \textbf{Tránh chuyển sớm}:\\
+              Học tránh penalty $-1.0$ → kiên nhẫn giữ pha
+      \end{itemize}
+    \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+% ------ Frame 5: So sánh đặc điểm ------
+\begin{frame}{So sánh đặc điểm hai chiến lược điều khiển}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Đặc điểm} & \textbf{Fixed-Time} & \textbf{DQN}\\
+    \midrule
+    Thích ứng theo thực tế      & \textcolor{vnred}{\large\textbf{$\times$}} & \textcolor{techgreen}{\large\textbf{$\checkmark$}} (thời gian thực)\\
+    Nhận thức trạng thái giao thông & \textcolor{vnred}{\large\textbf{$\times$}} & \textcolor{techgreen}{\large\textbf{$\checkmark$}} (vector 32d)\\
+    Khả năng học                & \textcolor{vnred}{\large\textbf{$\times$}} & \textcolor{techgreen}{\large\textbf{$\checkmark$}} (RL)\\
+    Tối ưu hóa                  & Cố định trước & Dựa trên kinh nghiệm\\
+    Chi phí tính toán           & \textcolor{techgreen}{Rất thấp} & Vừa phải\\
+    Độ phức tạp triển khai      & \textcolor{techgreen}{Đơn giản} & Phức tạp hơn\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \vspace{8pt}
+  \begin{alertblock}{Hạn chế của thực nghiệm cần lưu ý}
+    \begin{itemize}
+      \item Chỉ 1 ngã tư đơn, lưu lượng mô phỏng theo xác suất cố định
+      \item Throughput cải thiện còn khiêm tốn (1.8\%)
+      \item Chưa kiểm chứng trên dữ liệu giao thông thực
+      \item Huấn luyện 30--60 phút, chưa phù hợp online
+    \end{itemize}
+  \end{alertblock}
+\end{frame}
+
+% ------ Frame 6: Tóm tắt kết quả Ch4 ------
+\begin{frame}{Tóm tắt kết quả Chương IV}
+  \begin{center}
+  \begin{tikzpicture}[scale=0.9, font=\small]
+    % DQN box
+    \node[draw, fill=techgreen!20, rounded corners, minimum width=4cm, minimum height=3.5cm, align=center] (dqn) at (-3,0) {};
+    \node[above, font=\footnotesize\bfseries, vnblue] at (-3,1.6) {DQN Agent};
+    \node[align=center, font=\scriptsize] at (-3,0.6) {Hàng đợi: \textbf{16.05 xe}};
+    \node[align=center, font=\scriptsize] at (-3,0.0) {Chờ: \textbf{30.55 s}};
+    \node[align=center, font=\scriptsize] at (-3,-0.6) {Tốc độ: \textbf{5.65 m/s}};
+    \node[align=center, font=\scriptsize] at (-3,-1.2) {Reward: \textbf{$-$14.754}};
+
+    % Arrow
+    \node[font=\large\bfseries] at (0,0) {\textcolor{vnblue}{vs}};
+
+    % Fixed-Time box
+    \node[draw, fill=vnred!10, rounded corners, minimum width=4cm, minimum height=3.5cm, align=center] (ft) at (3,0) {};
+    \node[above, font=\footnotesize\bfseries, vnred] at (3,1.6) {Fixed-Time 160s};
+    \node[align=center, font=\scriptsize] at (3,0.6) {Hàng đợi: 33.13 xe};
+    \node[align=center, font=\scriptsize] at (3,0.0) {Chờ: 121.35 s};
+    \node[align=center, font=\scriptsize] at (3,-0.6) {Tốc độ: 4.87 m/s};
+    \node[align=center, font=\scriptsize] at (3,-1.2) {Reward: $-$35.512};
+
+    % Improvement labels
+    \node[font=\scriptsize\bfseries, techgreen] at (-7,0.6) {$\downarrow$\textbf{51.6\%}};
+    \node[font=\scriptsize\bfseries, techgreen] at (-7,0.0) {$\downarrow$\textbf{74.8\%}};
+    \node[font=\scriptsize\bfseries, techgreen] at (-7,-0.6) {$\uparrow$\textbf{16.0\%}};
+    \node[font=\scriptsize\bfseries, techgreen] at (-7,-1.2) {$\uparrow$\textbf{58.5\%}};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}

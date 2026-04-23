@@ -98,6 +98,7 @@ def run_episode_with_monitoring(
     agent: Optional[DQNAgent] = None,
     strategy_name: str = "Unknown",
     verbose: bool = True,
+    phase_schedule: Optional[List] = None,
 ) -> Dict:
     """Run a single episode with detailed metrics monitoring.
     
@@ -119,10 +120,12 @@ def run_episode_with_monitoring(
     
     # Initialize controller if using fixed-time
     if agent is None:
+        # Dùng 160s schedule bất đối xứng (EW:NS = 2:1) từ config, khớp với báo cáo
+        _schedule = phase_schedule or [(2, 100), (3, 5), (0, 50), (1, 5)]
         controller = FixedTimeController(
             FixedTimeConfig(
-                green_duration=55,
-                yellow_duration=5,
+                phase_schedule=[tuple(p) for p in _schedule],
+                action_duration=env_config.action_duration,
             )
         )
     
@@ -195,6 +198,7 @@ def compare_strategies_realtime(
     env_config: EnvConfig,
     model_path: Optional[Path] = None,
     num_episodes: int = 2,
+    ft_schedule: Optional[List] = None,
 ) -> None:
     """Compare DQN and Fixed-Time strategies with real-time monitoring.
     
@@ -216,8 +220,11 @@ def compare_strategies_realtime(
         try:
             print(f"{Colors.OKGREEN}Loading DQN model from {model_path}{Colors.ENDC}\n")
             num_phases = len(env_config.phases)
-            state_dim = num_phases * 4
-            
+            # Resolve state_dim thực tế từ env (lanes × 4 features = 8 × 4 = 32)
+            _tmp_env = SumoMDPEnv(env_config)
+            state_dim = _tmp_env.reset().shape[0]
+            _tmp_env.close()
+
             agent_cfg = AgentConfig(state_dim=state_dim, action_dim=num_phases)
             agent = DQNAgent(agent_cfg)
             
@@ -257,17 +264,19 @@ def compare_strategies_realtime(
                 agent=agent,
                 strategy_name=f"DQN Agent (Episode {ep + 1})",
                 verbose=True,
+                phase_schedule=ft_schedule,
             )
             all_dqn_results.append(dqn_result)
         else:
             dqn_result = None
-        
+
         # Run Fixed-Time
         fixed_result = run_episode_with_monitoring(
             env_config,
             agent=None,
             strategy_name=f"Fixed-Time Controller (Episode {ep + 1})",
             verbose=True,
+            phase_schedule=ft_schedule,
         )
         all_fixed_results.append(fixed_result)
     
@@ -368,23 +377,37 @@ def main():
     )
     
     args = parser.parse_args()
-    
-    # Create environment config
+
+    # Đọc từ config.yaml để đảm bảo nhất quán với train.py và báo cáo
+    cfg = load_config()
+    sumo_cfg = cfg.get("sumo", {})
+    _action_dur = sumo_cfg.get("action_duration", 5)
+
     env_config = EnvConfig(
-        sumocfg_path=args.scenario,
-        tls_id="c",
-        phases=[0, 1, 2, 3],
-        action_duration=5,
-        min_phase_steps=6,   # 30s min (6 × 5s)
-        max_phase_steps=24,  # 120s max (24 × 5s)
-        max_steps=3600,
-        warmup_steps=60,
+        sumocfg_path=args.scenario or sumo_cfg.get("sumocfg_path", "data/scenarios/hn_sample/config.sumocfg"),
+        tls_id=sumo_cfg.get("tls_id", "c"),
+        phases=sumo_cfg.get("phases", [0, 1, 2, 3]),
+        action_duration=_action_dur,
+        min_phase_steps=max(1, sumo_cfg.get("min_phase_duration", 5) // _action_dur),
+        max_phase_steps=max(2, sumo_cfg.get("max_phase_duration", 140) // _action_dur),
+        max_steps=sumo_cfg.get("max_steps", 3600),
+        warmup_steps=sumo_cfg.get("warmup_steps", 60),
         gui=not args.no_gui,
-        vn_weights=VNWeights(motorcycle=0.5, car=1.5, bus=2.0, truck=2.0),
+        vn_weights=VNWeights(**cfg.get("vn_weights", {})),
+        phase_green_min={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_min", {}).items()
+        },
+        phase_green_max={
+            int(k): max(1, v // _action_dur)
+            for k, v in sumo_cfg.get("phase_green_max", {}).items()
+        },
     )
-    
+
+    ft_schedule = sumo_cfg.get("fixed_time_phase_schedule", [(2, 100), (3, 5), (0, 50), (1, 5)])
+
     # Run comparison
-    compare_strategies_realtime(env_config, args.model_path, args.episodes)
+    compare_strategies_realtime(env_config, args.model_path, args.episodes, ft_schedule)
 
 
 if __name__ == "__main__":
