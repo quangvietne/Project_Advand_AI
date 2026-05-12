@@ -1,7 +1,9 @@
 <routes>
     <!-- Vietnamese vehicle types: emphasize motorcycles -->
-    <vType id="motorcycle" accel="3.0" decel="5.0" sigma="0.3" length="2.0" minGap="1.0" maxSpeed="16.67" vClass="motorcycle"/>
-    <vType id="car" accel="2.6" decel="4.5" sigma="0.5" length="5.0" minGap="2.5" maxSpeed="13.89" vClass="passenger"/>
+    <!-- Motorcycle: sublane + width 0.6m for parallel riding in one lane -->
+    <vType id="motorcycle" accel="3.0" decel="5.0" sigma="0.3" length="2.0" width="0.6" minGap="0.2" maxSpeed="16.67" vClass="motorcycle" lcSublane="1.0" latAlignment="compact"/>
+    <!-- Car: reduced minGap for mixed car + motorcycle in one lane -->
+    <vType id="car" accel="2.6" decel="4.5" sigma="0.5" length="5.0" minGap="1.0" maxSpeed="13.89" vClass="passenger"/>
     <vType id="bus" accel="1.2" decel="3.5" sigma="0.5" length="12.0" minGap="3.0" maxSpeed="11.11" vClass="bus"/>
     <vType id="truck" accel="1.5" decel="3.0" sigma="0.5" length="7.5" minGap="2.5" maxSpeed="11.11" vClass="truck"/>
 

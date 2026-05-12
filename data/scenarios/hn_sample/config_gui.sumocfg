@@ -15,6 +15,7 @@
         <time-to-teleport value="-1"/>
         <collision.check-junctions value="true"/>
         <collision.action value="warn"/>
+        <lateral-resolution value="0.6"/>
     </processing>
     
     <!-- GUI-specific visualization settings -->

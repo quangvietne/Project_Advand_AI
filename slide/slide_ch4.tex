@@ -39,22 +39,28 @@
     \end{block}
 
     \column{0.48\textwidth}
-    \begin{block}{5 chỉ số đánh giá}
+        \begin{block}{7 chỉ số đánh giá}
       \begin{enumerate}
         \item \textbf{Avg Queue Length}\\
-              Số xe dừng TB trên tất cả làn
+          Tổng hàng đợi TB (đã nhân trọng số theo hướng)
         \vspace{4pt}
         \item \textbf{Max Queue Length}\\
-              Đỉnh ùn tắc cực đại
+          Đỉnh ùn tắc cực đại (đã nhân trọng số)
         \vspace{4pt}
-        \item \textbf{Avg Wait Time}\\
-              Thời gian chờ TB (s/bước)
+        \item \textbf{Std Queue Length}\\
+          Độ lệch chuẩn hàng đợi
+        \vspace{4pt}
+        \item \textbf{Queue-delay (proxy)}\\
+          Giá trị phạt từ hàm thưởng (không phải thời gian thực)
+        \vspace{4pt}
+        \item \textbf{Avg Speed}\\
+          Tốc độ TB trên các làn
         \vspace{4pt}
         \item \textbf{Throughput}\\
-              Tổng xe qua nút / episode
+          Tổng xe qua nút / episode
         \vspace{4pt}
         \item \textbf{Total Reward}\\
-              $\sum_t R_t$ tích lũy --- chỉ số tổng hợp
+          $\sum_t R_t$ tích lũy --- chỉ số tổng hợp
       \end{enumerate}
     \end{block}
   \end{columns}
@@ -69,11 +75,11 @@
     \textbf{Chỉ số} & \textbf{DQN} & \textbf{Fixed-Time} & \textbf{Thay đổi} & \textbf{Cải thiện}\\
     \midrule
     \rowcolor{lightgreen}
-    Hàng đợi TB (xe)     & \textbf{16.05} & 33.13 & $-$17.08 & \textcolor{techgreen}{\textbf{$\downarrow$51.6\%}}\\
-    Hàng đợi Max (xe)    & \textbf{51}    & 66    & $-$15    & \textcolor{techgreen}{\textbf{$\downarrow$22.7\%}}\\
+    Hàng đợi TB (xe, trọng số) & \textbf{16.05} & 33.13 & $-$17.08 & \textcolor{techgreen}{\textbf{$\downarrow$51.6\%}}\\
+    Hàng đợi Max (xe, trọng số) & \textbf{51}    & 66    & $-$15    & \textcolor{techgreen}{\textbf{$\downarrow$22.7\%}}\\
     \rowcolor{lightgreen}
     Độ lệch chuẩn        & \textbf{8.16}  & 12.77 & $-$4.61  & \textcolor{techgreen}{\textbf{$\downarrow$36.1\%}}\\
-    Thời gian chờ (s)    & \textbf{30.55} & 121.35& $-$90.80 & \textcolor{techgreen}{\textbf{$\downarrow$74.8\%}}\\
+    Queue-delay (proxy)  & \textbf{30.55} & 121.35& $-$90.80 & \textcolor{techgreen}{\textbf{$\downarrow$74.8\%}}\\
     \rowcolor{lightgreen}
     Tốc độ TB (m/s)      & \textbf{5.65}  & 4.87  & $+$0.78  & \textcolor{techgreen}{\textbf{$\uparrow$16.0\%}}\\
     Throughput (xe/ep.)  & \textbf{344}   & 338   & $+$6     & \textcolor{techgreen}{\textbf{$\uparrow$1.8\%}}\\
@@ -94,10 +100,10 @@
 \begin{frame}{Phân tích: Hàng đợi và Thời gian chờ}
   \begin{columns}[T]
     \column{0.50\textwidth}
-    \begin{block}{Hàng đợi trung bình}
+    \begin{block}{Hàng đợi trung bình (đã nhân trọng số)}
       \begin{itemize}
-        \item DQN: \textbf{16.05 xe/làn}
-        \item Fixed-Time: \textbf{33.13 xe/làn}
+        \item DQN: \textbf{16.05 xe}
+        \item Fixed-Time: \textbf{33.13 xe}
         \item[$\Rightarrow$] \alert{Giảm 51.6\%}
       \end{itemize}
       Độ lệch chuẩn: 8.16 vs 12.77\\
@@ -105,10 +111,10 @@
       (ít đợt ùn tắc cục bộ đột ngột)
     \end{block}
     \vspace{6pt}
-    \begin{block}{Thời gian chờ trung bình}
+    \begin{block}{Queue-delay (proxy)}
       \begin{itemize}
-        \item DQN: \textbf{30.55 s/bước}
-        \item Fixed-Time: \textbf{121.35 s/bước}
+        \item DQN: \textbf{30.55}
+        \item Fixed-Time: \textbf{121.35}
         \item[$\Rightarrow$] \alert{Giảm 74.8\%}
       \end{itemize}
       Cải thiện lớn nhất trong tất cả chỉ số
@@ -205,7 +211,7 @@
     \node[draw, fill=techgreen!20, rounded corners, minimum width=4cm, minimum height=3.5cm, align=center] (dqn) at (-3,0) {};
     \node[above, font=\footnotesize\bfseries, vnblue] at (-3,1.6) {DQN Agent};
     \node[align=center, font=\scriptsize] at (-3,0.6) {Hàng đợi: \textbf{16.05 xe}};
-    \node[align=center, font=\scriptsize] at (-3,0.0) {Chờ: \textbf{30.55 s}};
+    \node[align=center, font=\scriptsize] at (-3,0.0) {Queue-delay: \textbf{30.55}};
     \node[align=center, font=\scriptsize] at (-3,-0.6) {Tốc độ: \textbf{5.65 m/s}};
     \node[align=center, font=\scriptsize] at (-3,-1.2) {Reward: \textbf{$-$14.754}};
 
@@ -216,7 +222,7 @@
     \node[draw, fill=vnred!10, rounded corners, minimum width=4cm, minimum height=3.5cm, align=center] (ft) at (3,0) {};
     \node[above, font=\footnotesize\bfseries, vnred] at (3,1.6) {Fixed-Time 160s};
     \node[align=center, font=\scriptsize] at (3,0.6) {Hàng đợi: 33.13 xe};
-    \node[align=center, font=\scriptsize] at (3,0.0) {Chờ: 121.35 s};
+    \node[align=center, font=\scriptsize] at (3,0.0) {Queue-delay: 121.35};
     \node[align=center, font=\scriptsize] at (3,-0.6) {Tốc độ: 4.87 m/s};
     \node[align=center, font=\scriptsize] at (3,-1.2) {Reward: $-$35.512};
 

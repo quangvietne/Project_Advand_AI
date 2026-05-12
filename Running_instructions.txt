@@ -135,6 +135,14 @@ python scripts/gui.py
 
 > **Kết quả mong đợi:** Cửa sổ SUMO-GUI mở ra, hiển thị ngã tư với xe cộ di chuyển và đèn giao thông thay đổi theo quyết định của DQN
 
+Xem Fixed-Time (chu kỳ fix cứng trong config.yaml) với SUMO-GUI:
+
+```powershell
+python scripts/gui.py baseline
+```
+
+> **Kết quả mong đợi:** Cửa sổ SUMO-GUI mở ra, đèn giao thông chạy theo lịch Fixed-Time đã cấu hình
+
 ---
 
 ### BƯỚC 8 — PHÂN TÍCH KẾT QUẢ (Notebook)

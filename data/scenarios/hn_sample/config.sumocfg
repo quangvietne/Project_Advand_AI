@@ -9,5 +9,6 @@
     </time>
     <processing>
         <time-to-teleport value="-1"/>
+        <lateral-resolution value="0.6"/>
     </processing>
 </configuration>
